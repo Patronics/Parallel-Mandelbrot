@@ -43,17 +43,41 @@ complex values.
 
 static int compute_point( double x, double y, int max )
 {
+	
 	double complex z = 0;
 	double complex alpha = x + I*y;
 
-	int iter = 0;
+	double z_real = 0;
+    double z_imaginary = 0;
+    double z_realsquared = 0;
+    double z_imaginarysquared = 0;
 
-	while( cabs(z)<4 && iter < max ) {
-		z = cpow(z,2) + alpha;
-		iter++;
-	}
+    int i;
 
-	return iter;
+    for (i = 0; i < max; i++){
+		if(y == 0)
+		{
+			z = cpow(z,2) + alpha;
+			if(cabs(z) >= 4.0) {
+				i++;
+				break;
+			}
+		}
+		else
+		{
+			z_imaginary = z_real * z_imaginary;
+			z_imaginary = z_imaginary + z_imaginary + y;
+			z_real = z_realsquared - z_imaginarysquared + x;
+			z_realsquared = z_real * z_real;
+			z_imaginarysquared = z_imaginary * z_imaginary;
+			if (z_realsquared + z_imaginarysquared >= 4.0) {
+				i++;
+				break;
+			}
+		}
+    }
+	
+    return i;
 }
 
 /*
