@@ -152,35 +152,39 @@ void shiftFrame(coordSet* coords, double xShift, double yShift){
 	reDraw(coords);
 }
 
-/*
+
 //accidentally discovered, mirrors coords, may be useful
 void reflect(coordSet* coords){
-setMidpoints(coords);
-coords->xmax=coords->xmax+(coords->xmid-coords->xmax)*2;
-coords->xmin=coords->xmin+(coords->xmid-coords->xmin)*2;
-coords->ymax=coords->ymax+(coords->ymid-coords->ymax)*2;
-coords->ymin=coords->ymin+(coords->ymid-coords->ymin)*2;
-setMidpoints(coords);
-reDraw(coords);
+	setMidpoints(coords);
+	coords->xmax=coords->xmax+(coords->xmid-coords->xmax)*2;
+	coords->xmin=coords->xmin+(coords->xmid-coords->xmin)*2;
+	coords->ymax=coords->ymax+(coords->ymid-coords->ymax)*2;
+	coords->ymin=coords->ymin+(coords->ymid-coords->ymin)*2;
+	setMidpoints(coords);
+	reDraw(coords);
 }
-*/
+
 
 int main( int argc, char *argv[] )
 {
 	// The initial boundaries of the fractal image in x,y space.
-	double xmin=-1.5;
-	double xmax= 0.5;
-	double ymin=-1.0;
-	double ymax= 1.0;
+	#define xminDefault -1.5
+	#define xmaxDefault 0.5
+	#define yminDefault -1.0
+	#define ymaxDefault 1.0
+	//double xmin=-1.5;
+	//double xmax= 0.5;
+	//double ymin=-1.0;
+	//double ymax= 1.0;
 
 	// Maximum number of iterations to compute.
 	// Higher values take longer but have more detail.
 	int maxiter=3000; //default 500
 	coordSet* dispCoords = malloc(sizeof(coordSet));
-	dispCoords->xmin=xmin;
-	dispCoords->xmax=xmax;
-	dispCoords->ymin=ymin;
-	dispCoords->ymax=ymax;
+	dispCoords->xmin=xminDefault;
+	dispCoords->xmax=xmaxDefault;
+	dispCoords->ymin=yminDefault;
+	dispCoords->ymax=ymaxDefault;
 	dispCoords->maxiter=maxiter;
 	setMidpoints(dispCoords);
 	// Open a new window.
@@ -203,6 +207,20 @@ int main( int argc, char *argv[] )
 		switch(c){
 		case 'q':
 			exit(0);
+		//reset default position
+		case 'r':
+			dispCoords->xmin=xminDefault;
+			dispCoords->xmax=xmaxDefault;
+			dispCoords->ymin=yminDefault;
+			dispCoords->ymax=ymaxDefault;
+			setMidpoints(dispCoords);
+			reDraw(dispCoords);
+			break;
+		//Reflect the view (mirroring it)
+		case 'R':
+			reflect(dispCoords);
+			break;
+		//zoom in/out with i/o (or smoothly with I/O)
 		case 'i':
 			printf("zooming in\n");
 			zoomIn(dispCoords, 2);
@@ -219,6 +237,7 @@ int main( int argc, char *argv[] )
 			printf("zooming out slightly\n");
 			zoomOut(dispCoords, 1.25);
 			break;
+		//pan with wasd (or smoothly with WASD)
 		case 'w':
 			shiftFrame(dispCoords, 0, -0.5);
 			break;
