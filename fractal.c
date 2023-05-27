@@ -116,22 +116,22 @@ void reDraw(coordSet* coords){
 }
 
 
-void zoomIn(coordSet* coords){
+void zoomIn(coordSet* coords,double extent){
 	setMidpoints(coords);
-	coords->xmax=(coords->xmid+coords->xmax)/2;
-	coords->xmin=(coords->xmid+coords->xmin)/2;
-	coords->ymax=(coords->ymid+coords->ymax)/2;
-	coords->ymin=(coords->ymid+coords->ymin)/2;
+	coords->xmax=(coords->xmid+coords->xmax)/extent;
+	coords->xmin=(coords->xmid+coords->xmin)/extent;
+	coords->ymax=(coords->ymid+coords->ymax)/extent;
+	coords->ymin=(coords->ymid+coords->ymin)/extent;
 	setMidpoints(coords);
 	reDraw(coords);
 }
 
-void zoomOut(coordSet* coords){
+void zoomOut(coordSet* coords, double extent){
 setMidpoints(coords);
-coords->xmax=coords->xmax+(coords->xmax-coords->xmid)*4;
-coords->xmin=coords->xmin+(coords->xmin-coords->xmid)*4;
-coords->ymax=coords->ymax+(coords->ymax-coords->ymid)*4;
-coords->ymin=coords->ymin+(coords->ymin-coords->ymid)*4;
+coords->xmax=coords->xmid+(coords->xmax-coords->xmid)*extent;
+coords->xmin=coords->xmid+(coords->xmin-coords->xmid)*extent;
+coords->ymax=coords->ymid+(coords->ymax-coords->ymid)*extent;
+coords->ymin=coords->ymid+(coords->ymin-coords->ymid)*extent;
 setMidpoints(coords);
 reDraw(coords);
 }
@@ -189,11 +189,20 @@ int main( int argc, char *argv[] )
 			exit(0);
 		case 'i':
 			printf("zooming in\n");
-			zoomIn(dispCoords);
+			zoomIn(dispCoords, 2);
 			break;
 		case 'o':
 			printf("zooming out\n");
-			zoomOut(dispCoords);
+			zoomOut(dispCoords, 2);
+			break;
+		case 'I':
+		printf("zooming in slightly\n");
+		zoomIn(dispCoords, 1.5);
+		break;
+		case 'O':
+			printf("zooming out slightly\n");
+			zoomOut(dispCoords, 1.25);
+			break;
 		}
 //		} else if(c=='q'){
 	}
