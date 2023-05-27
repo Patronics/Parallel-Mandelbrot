@@ -1,6 +1,6 @@
 
 fractal: fractal.c gfx.c
-	gcc fractal.c gfx.c -o fractal -lX11 -lm
+	gcc fractal.c gfx.c  -Wall -fopenmp -o fractal -lX11 -lm 
 
 example: example.c gfx.c
 	gcc example.c gfx.c -o example -lX11 -lm

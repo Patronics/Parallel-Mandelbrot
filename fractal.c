@@ -12,6 +12,9 @@ Starting code for CSE 30341 Project 3.
 #include <string.h>
 #include <complex.h>
 
+#include <omp.h>
+
+
 /*
 Compute the number of iterations at point x, y
 in the complex space, up to a maximum of maxiter.
@@ -55,8 +58,9 @@ void compute_image( double xmin, double xmax, double ymin, double ymax, int maxi
 	int height = gfx_ysize();
 
 	// For every pixel i,j, in the image...
-
+	#pragma omp parallel for
 	for(j=0;j<height;j++) {
+		#pragma omp parallel for
 		for(i=0;i<width;i++) {
 
 			// Scale from pixels i,j to coordinates x,y
@@ -69,9 +73,11 @@ void compute_image( double xmin, double xmax, double ymin, double ymax, int maxi
 			// Convert a iteration number to an RGB color.
 			// (Change this bit to get more interesting colors.)
 			int gray = 255 * iter / maxiter;
+			#pragma omp critical
 			gfx_color(gray,gray,gray);
 
 			// Plot the point on the screen.
+			#pragma omp critical
 			gfx_point(i,j);
 		}
 	}
