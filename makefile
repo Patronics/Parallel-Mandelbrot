@@ -2,10 +2,10 @@
 all: fractal serialfractal
 
 fractal: fractal.c gfx.c
-	gcc fractal.c gfx.c  -Wall -fopenmp -o fractal -lX11 -lm 
+	gcc fractal.c gfx.c -O3 -Wall -fopenmp -o fractal -lX11 -lm
 
 serialfractal: fractal.c gfx.c
-	gcc fractal.c gfx.c  -Wall -Wno-unknown-pragmas -o serialfractal -lX11 -lm 
+	gcc fractal.c gfx.c -O3 -Wall -Wno-unknown-pragmas -o serialfractal -lX11 -lm
 
 
 
@@ -15,4 +15,4 @@ example: example.c gfx.c
 
 
 clean:
-	rm example fractal serialfractal
+	rm -f example fractal serialfractal
