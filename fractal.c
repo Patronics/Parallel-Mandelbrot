@@ -176,21 +176,34 @@ void reflect(coordSet* coords){
 }
 
 
-int main( int argc, char *argv[] )
-{
+int main( int argc, char *argv[] ){
 	// The initial boundaries of the fractal image in x,y space.
-	#define xminDefault -1.5
-	#define xmaxDefault 0.5
-	#define yminDefault -1.0
-	#define ymaxDefault 1.0
-	//double xmin=-1.5;
-	//double xmax= 0.5;
-	//double ymin=-1.0;
-	//double ymax= 1.0;
+	const double xminDefault -1.5
+	const double xmaxDefault 0.5
+	const double yminDefault -1.0
+	const double ymaxDefault 1.0
+	const int maxiterDefault=3000; //default 500
+	
+	if(argv[1] && argv[2] && argv[3] && argv[4] && argv[5] && argv[6]){
+		dispCoords->xmin = atof(argv[1]);
+		dispCoords->xmax = atof(argv[2]);
+		dispCoords->ymin = atof(argv[3]);
+		dispCoords->ymax = atof(argv[4]);
+		dispCoords->maxiter = atoi(argv[5]);
+		setMidpoints(dispCoords);
+		thread_count = atoi(argv[6]);
+	}else{
+		dispCoords->xmin=xminDefault;
+		dispCoords->xmax=xmaxDefault;
+		dispCoords->ymin=yminDefault;
+		dispCoords->ymax=ymaxDefault;
+		dispCoords->maxiter=maxiterDefault;
+		setMidpoints(dispCoords);
+	}
 
 	// Maximum number of iterations to compute.
 	// Higher values take longer but have more detail.
-	int maxiter=3000; //default 500
+	
 	coordSet* dispCoords = malloc(sizeof(coordSet));
 	dispCoords->xmin=xminDefault;
 	dispCoords->xmax=xmaxDefault;
@@ -217,6 +230,7 @@ int main( int argc, char *argv[] )
 		// Quit if q is pressed.
 		switch(c){
 		case 'q':
+			free(dispCoords);
 			exit(0);
 		//reset default position
 		case 'r':
