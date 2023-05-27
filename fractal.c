@@ -11,6 +11,7 @@ based on starting code for CSE 30341 Project 3.
 #include <errno.h>
 #include <string.h>
 #include <complex.h>
+#include <time.h>
 
 #include <omp.h>
 
@@ -112,7 +113,17 @@ void reDraw(coordSet* coords){
 	// Show the configuration, just in case you want to recreate it.
 	printf("coordinates: %lf %lf %lf %lf\n",coords->xmin,coords->xmax,coords->ymin,coords->ymax);
 	// Display the fractal image
+
+	struct timespec startTime, endTime;
+	double runTime;
+	clock_gettime(CLOCK_MONOTONIC, &startTime);
+
 	compute_image(coords);
+
+	clock_gettime(CLOCK_MONOTONIC, &endTime);
+	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
+	fprintf(stderr, "\nrendering frame took %lf seconds\n", runTime);
+
 }
 
 
