@@ -62,13 +62,14 @@ void compute_image( double xmin, double xmax, double ymin, double ymax, int maxi
 	for(j=0;j<height;j++) {
 		#pragma omp parallel for
 		for(i=0;i<width;i++) {
-
 			// Scale from pixels i,j to coordinates x,y
 			double x = xmin + i*(xmax-xmin)/width;
 			double y = ymin + j*(ymax-ymin)/height;
 
 			// Compute the iterations at x,y
-			int iter = compute_point(x,y,maxiter);
+			int iter = 0;
+			//#pragma omp critical
+			iter = compute_point(x,y,maxiter);
 
 			// Convert a iteration number to an RGB color.
 			// (Change this bit to get more interesting colors.)
@@ -76,12 +77,12 @@ void compute_image( double xmin, double xmax, double ymin, double ymax, int maxi
 			int r = 255 * iter / maxiter;
 			int g = 255 * iter / (maxiter/3);
 			int b = 255 * iter / (maxiter/9);
-			#pragma omp critical
-			gfx_color(r,g,b);
-
-			// Plot the point on the screen.
-			#pragma omp critical
-			gfx_point(i,j);
+			#pragma omp critical (plotpixel)
+			{
+				gfx_color(r,g,b);
+				// Plot the point on the screen.
+				gfx_point(i,j);
+			}
 		}
 	}
 }
