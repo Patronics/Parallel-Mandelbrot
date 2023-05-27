@@ -178,20 +178,23 @@ void reflect(coordSet* coords){
 
 int main( int argc, char *argv[] ){
 	// The initial boundaries of the fractal image in x,y space.
-	const double xminDefault -1.5
-	const double xmaxDefault 0.5
-	const double yminDefault -1.0
-	const double ymaxDefault 1.0
-	const int maxiterDefault=3000; //default 500
+	const double xminDefault = -1.5;
+	const double xmaxDefault = 0.5;
+	const double yminDefault = -1.0;
+	const double ymaxDefault=  1.0;
+	// Maximum number of iterations to compute.
+	// Higher values take longer but have more detail.
+	const int maxiterDefault = 3000; //default 500
 	
-	if(argv[1] && argv[2] && argv[3] && argv[4] && argv[5] && argv[6]){
+	coordSet* dispCoords = malloc(sizeof(coordSet));
+	
+	if(argv[1] && argv[2] && argv[3] && argv[4] && argv[5]){
 		dispCoords->xmin = atof(argv[1]);
 		dispCoords->xmax = atof(argv[2]);
 		dispCoords->ymin = atof(argv[3]);
 		dispCoords->ymax = atof(argv[4]);
 		dispCoords->maxiter = atoi(argv[5]);
 		setMidpoints(dispCoords);
-		thread_count = atoi(argv[6]);
 	}else{
 		dispCoords->xmin=xminDefault;
 		dispCoords->xmax=xmaxDefault;
@@ -201,16 +204,7 @@ int main( int argc, char *argv[] ){
 		setMidpoints(dispCoords);
 	}
 
-	// Maximum number of iterations to compute.
-	// Higher values take longer but have more detail.
-	
-	coordSet* dispCoords = malloc(sizeof(coordSet));
-	dispCoords->xmin=xminDefault;
-	dispCoords->xmax=xmaxDefault;
-	dispCoords->ymin=yminDefault;
-	dispCoords->ymax=ymaxDefault;
-	dispCoords->maxiter=maxiter;
-	setMidpoints(dispCoords);
+
 	// Open a new window.
 	gfx_open(640,480,"Mandelbrot Fractal");
 
