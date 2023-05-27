@@ -129,15 +129,27 @@ void zoomIn(coordSet* coords,double extent){
 }
 
 void zoomOut(coordSet* coords, double extent){
-setMidpoints(coords);
-double width = coords->xmid-coords->xmin;
-double height = coords->ymid-coords->ymin;
-coords->xmax=coords->xmid+(width*extent);
-coords->xmin=coords->xmid-(width*extent);
-coords->ymax=coords->ymid+(height*extent);
-coords->ymin=coords->ymid-(height*extent);
-setMidpoints(coords);
-reDraw(coords);
+	setMidpoints(coords);
+	double width = coords->xmid-coords->xmin;
+	double height = coords->ymid-coords->ymin;
+	coords->xmax=coords->xmid+(width*extent);
+	coords->xmin=coords->xmid-(width*extent);
+	coords->ymax=coords->ymid+(height*extent);
+	coords->ymin=coords->ymid-(height*extent);
+	setMidpoints(coords);
+	reDraw(coords);
+}
+
+void shiftFrame(coordSet* coords, double xShift, double yShift){
+	setMidpoints(coords);
+	double width = coords->xmax-coords->xmin;
+	double height = coords->ymax-coords->ymin;
+	coords->xmax+=xShift*width;
+	coords->xmin+=xShift*width;
+	coords->ymax+=yShift*height;
+	coords->ymin+=yShift*height;
+	setMidpoints(coords);
+	reDraw(coords);
 }
 
 /*
@@ -206,6 +218,30 @@ int main( int argc, char *argv[] )
 		case 'O':
 			printf("zooming out slightly\n");
 			zoomOut(dispCoords, 1.25);
+			break;
+		case 'w':
+			shiftFrame(dispCoords, 0, -0.5);
+			break;
+		case 'W':
+			shiftFrame(dispCoords, 0, -0.25);
+			break;
+		case 's':
+			shiftFrame(dispCoords, 0, 0.5);
+			break;
+		case 'S':
+			shiftFrame(dispCoords, 0, 0.25);
+			break;
+		case 'a':
+			shiftFrame(dispCoords, -0.5, 0);
+			break;
+		case 'A':
+			shiftFrame(dispCoords, -0.25, 0);
+			break;
+		case 'd':
+			shiftFrame(dispCoords, 0.5, 0);
+			break;
+		case 'D':
+			shiftFrame(dispCoords, 0.25, 0);
 			break;
 		}
 //		} else if(c=='q'){
