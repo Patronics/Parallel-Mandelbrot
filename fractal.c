@@ -60,9 +60,14 @@ Compute an entire image, writing each point to the given bitmap.
 Scale the image to the range (xmin-xmax,ymin-ymax).
 */
 
-void compute_image( double xmin, double xmax, double ymin, double ymax, int maxiter )
+void compute_image(coordSet* coords)
 {
 	int i,j;
+	double xmin=coords->xmin;
+	double xmax=coords->xmax;
+	double ymin=coords->ymin;
+	double ymax=coords->ymax;
+	int maxiter=coords->maxiter;
 
 	int width = gfx_xsize();
 	int height = gfx_ysize();
@@ -103,11 +108,11 @@ void setMidpoints(coordSet* coords){
 
 }
 
-void reDraw(double xmin, double xmax,double ymin,double ymax,int maxiter){
+void reDraw(coordSet* coords){
 	// Show the configuration, just in case you want to recreate it.
-	printf("coordinates: %lf %lf %lf %lf\n",xmin,xmax,ymin,ymax);
+	printf("coordinates: %lf %lf %lf %lf\n",coords->xmin,coords->xmax,coords->ymin,coords->ymax);
 	// Display the fractal image
-	compute_image(xmin,xmax,ymin,ymax,maxiter);
+	compute_image(coords);
 }
 
 
@@ -117,8 +122,8 @@ void zoomIn(coordSet* coords){
 	coords->xmin=(coords->xmid+coords->xmin)/2;
 	coords->ymax=(coords->ymid+coords->ymax)/2;
 	coords->ymin=(coords->ymid+coords->ymin)/2;
-
-	reDraw(coords->xmin, coords->xmax, coords->ymin, coords->ymax, coords->maxiter);
+	setMidpoints(coords);
+	reDraw(coords);
 }
 
 
@@ -149,7 +154,7 @@ int main( int argc, char *argv[] )
 	gfx_clear();
 
 	//draw intial position
-	reDraw(xmin,xmax,ymin,ymax,maxiter);
+	reDraw(dispCoords);
 
 
 	while(1) {
