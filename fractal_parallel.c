@@ -24,6 +24,7 @@ typedef struct coordSet {
 	double ymid;
 } coordSet;
 
+int thread_count = 4; //default setting, can be used to test for-loop under diff # of threads
 
 /*
 Compute the number of iterations at point x, y
@@ -73,6 +74,7 @@ void compute_image(coordSet* coords)
 	int height = gfx_ysize();
 
 	// For every pixel i,j, in the image...
+	double start_time = omp_get_wtime();
 	#pragma omp parallel for schedule(dynamic)
 	for(j=0;j<height;j++) {
 		#pragma omp parallel for schedule(dynamic)
@@ -100,6 +102,8 @@ void compute_image(coordSet* coords)
 			}
 		}
 	}
+	double end_time = omp_get_wtime();
+	printf("%.5f\n", end_time - start_time);
 }
 
 void setMidpoints(coordSet* coords){
@@ -177,16 +181,29 @@ int main( int argc, char *argv[] )
 	//double ymin=-1.0;
 	//double ymax= 1.0;
 
-	// Maximum number of iterations to compute.
-	// Higher values take longer but have more detail.
-	int maxiter=3000; //default 500
 	coordSet* dispCoords = malloc(sizeof(coordSet));
-	dispCoords->xmin=xminDefault;
-	dispCoords->xmax=xmaxDefault;
-	dispCoords->ymin=yminDefault;
-	dispCoords->ymax=ymaxDefault;
-	dispCoords->maxiter=maxiter;
-	setMidpoints(dispCoords);
+
+	if(argv[1] && argv[2] && argv[3] && argv[4] && argv[5] && argv[6])
+	{
+		dispCoords->xmin = atof(argv[1]);
+		dispCoords->xmax = atof(argv[2]);
+		dispCoords->ymin = atof(argv[3]);
+		dispCoords->ymax = atof(argv[4]);
+		dispCoords->maxiter = atoi(argv[5]);
+		setMidpoints(dispCoords);
+		thread_count = atoi(argv[6]);
+	}
+	else
+	{
+		int maxiter=3000; //default 500
+		dispCoords->xmin=xminDefault;
+		dispCoords->xmax=xmaxDefault;
+		dispCoords->ymin=yminDefault;
+		dispCoords->ymax=ymaxDefault;
+		dispCoords->maxiter=maxiter;
+		setMidpoints(dispCoords);
+	}
+
 	// Open a new window.
 	gfx_open(640,480,"Mandelbrot Fractal");
 
@@ -206,6 +223,7 @@ int main( int argc, char *argv[] )
 		// Quit if q is pressed.
 		switch(c){
 		case 'q':
+			free(dispCoords);
 			exit(0);
 		//reset default position
 		case 'r':
