@@ -1,6 +1,6 @@
 /*
-fractal.c - Sample Mandelbrot Fractal Display
-Starting code for CSE 30341 Project 3.
+fractal.c - Parallel interactive Mandelbrot Fractal Display
+based on starting code for CSE 30341 Project 3.
 */
 
 #include "gfx.h"
@@ -13,6 +13,16 @@ Starting code for CSE 30341 Project 3.
 #include <complex.h>
 
 #include <omp.h>
+
+typedef struct coordSet {
+	double xmin;
+	double xmax;
+	double ymin;
+	double ymax;
+	int maxiter;
+	double xmid;
+	double ymid;
+} coordSet;
 
 
 /*
@@ -87,6 +97,12 @@ void compute_image( double xmin, double xmax, double ymin, double ymax, int maxi
 	}
 }
 
+void setMidpoints(coordSet* coords){
+	coords->xmid = (coords->xmin+coords->xmax)/2;
+	coords->ymid = (coords->ymin+coords->ymax)/2;
+
+}
+
 void reDraw(double xmin, double xmax,double ymin,double ymax,int maxiter){
 	// Show the configuration, just in case you want to recreate it.
 	printf("coordinates: %lf %lf %lf %lf\n",xmin,xmax,ymin,ymax);
@@ -95,22 +111,20 @@ void reDraw(double xmin, double xmax,double ymin,double ymax,int maxiter){
 }
 
 
-void zoomIn(double xmin, double xmax,double ymin,double ymax,int maxiter){
-	int xmid = (xmin+xmax)/2;
-	int ymid = (ymin+ymax)/2;
-	xmax=(xmid+xmax)/2;
-	xmin=(xmid+xmin)/2;
-	ymax=(ymid+ymax)/2;
-	ymin=(ymid+ymin)/2;
+void zoomIn(coordSet* coords){
+	setMidpoints(coords);
+	coords->xmax=(coords->xmid+coords->xmax)/2;
+	coords->xmin=(coords->xmid+coords->xmin)/2;
+	coords->ymax=(coords->ymid+coords->ymax)/2;
+	coords->ymin=(coords->ymid+coords->ymin)/2;
 
-	reDraw(xmin, xmax, ymin, ymax, maxiter);
+	reDraw(coords->xmin, coords->xmax, coords->ymin, coords->ymax, coords->maxiter);
 }
 
 
 int main( int argc, char *argv[] )
 {
 	// The initial boundaries of the fractal image in x,y space.
-
 	double xmin=-1.5;
 	double xmax= 0.5;
 	double ymin=-1.0;
@@ -119,7 +133,13 @@ int main( int argc, char *argv[] )
 	// Maximum number of iterations to compute.
 	// Higher values take longer but have more detail.
 	int maxiter=3000; //default 500
-
+	coordSet* dispCoords = malloc(sizeof(coordSet));
+	dispCoords->xmin=xmin;
+	dispCoords->xmax=xmax;
+	dispCoords->ymin=ymin;
+	dispCoords->ymax=ymax;
+	dispCoords->maxiter=maxiter;
+	setMidpoints(dispCoords);
 	// Open a new window.
 	gfx_open(640,480,"Mandelbrot Fractal");
 
@@ -142,7 +162,7 @@ int main( int argc, char *argv[] )
 			exit(0);
 		case 'i':
 			printf("zooming in\n");
-			zoomIn(xmin, xmax, ymin, ymax, maxiter);
+			zoomIn(dispCoords);
 		}
 //		} else if(c=='q'){
 	}
