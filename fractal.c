@@ -126,6 +126,28 @@ void zoomIn(coordSet* coords){
 	reDraw(coords);
 }
 
+void zoomOut(coordSet* coords){
+setMidpoints(coords);
+coords->xmax=coords->xmax+(coords->xmax-coords->xmid)*4;
+coords->xmin=coords->xmin+(coords->xmin-coords->xmid)*4;
+coords->ymax=coords->ymax+(coords->ymax-coords->ymid)*4;
+coords->ymin=coords->ymin+(coords->ymin-coords->ymid)*4;
+setMidpoints(coords);
+reDraw(coords);
+}
+
+/*
+//accidentally discovered, mirrors coords, may be useful
+void reflect(coordSet* coords){
+setMidpoints(coords);
+coords->xmax=coords->xmax+(coords->xmid-coords->xmax)*2;
+coords->xmin=coords->xmin+(coords->xmid-coords->xmin)*2;
+coords->ymax=coords->ymax+(coords->ymid-coords->ymax)*2;
+coords->ymin=coords->ymin+(coords->ymid-coords->ymin)*2;
+setMidpoints(coords);
+reDraw(coords);
+}
+*/
 
 int main( int argc, char *argv[] )
 {
@@ -168,6 +190,10 @@ int main( int argc, char *argv[] )
 		case 'i':
 			printf("zooming in\n");
 			zoomIn(dispCoords);
+			break;
+		case 'o':
+			printf("zooming out\n");
+			zoomOut(dispCoords);
 		}
 //		} else if(c=='q'){
 	}
