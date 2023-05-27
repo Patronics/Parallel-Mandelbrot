@@ -87,6 +87,26 @@ void compute_image( double xmin, double xmax, double ymin, double ymax, int maxi
 	}
 }
 
+void reDraw(double xmin, double xmax,double ymin,double ymax,int maxiter){
+	// Show the configuration, just in case you want to recreate it.
+	printf("coordinates: %lf %lf %lf %lf\n",xmin,xmax,ymin,ymax);
+	// Display the fractal image
+	compute_image(xmin,xmax,ymin,ymax,maxiter);
+}
+
+
+void zoomIn(double xmin, double xmax,double ymin,double ymax,int maxiter){
+	int xmid = (xmin+xmax)/2;
+	int ymid = (ymin+ymax)/2;
+	xmax=(xmid+xmax)/2;
+	xmin=(xmid+xmin)/2;
+	ymax=(ymid+ymax)/2;
+	ymin=(ymid+ymin)/2;
+
+	reDraw(xmin, xmax, ymin, ymax, maxiter);
+}
+
+
 int main( int argc, char *argv[] )
 {
 	// The initial boundaries of the fractal image in x,y space.
@@ -103,22 +123,28 @@ int main( int argc, char *argv[] )
 	// Open a new window.
 	gfx_open(640,480,"Mandelbrot Fractal");
 
-	// Show the configuration, just in case you want to recreate it.
-	printf("coordinates: %lf %lf %lf %lf\n",xmin,xmax,ymin,ymax);
 
 	// Fill it with a dark blue initially.
 	gfx_clear_color(0,0,255);
 	gfx_clear();
 
-	// Display the fractal image
-	compute_image(xmin,xmax,ymin,ymax,maxiter);
+	//draw intial position
+	reDraw(xmin,xmax,ymin,ymax,maxiter);
+
 
 	while(1) {
 		// Wait for a key or mouse click.
 		int c = gfx_wait();
-
+		printf("got character %c\n",c);
 		// Quit if q is pressed.
-		if(c=='q') exit(0);
+		switch(c){
+		case 'q':
+			exit(0);
+		case 'i':
+			printf("zooming in\n");
+			zoomIn(xmin, xmax, ymin, ymax, maxiter);
+		}
+//		} else if(c=='q'){
 	}
 
 	return 0;
