@@ -72,9 +72,12 @@ void compute_image( double xmin, double xmax, double ymin, double ymax, int maxi
 
 			// Convert a iteration number to an RGB color.
 			// (Change this bit to get more interesting colors.)
-			int gray = 255 * iter / maxiter;
+			//int gray = 255 * iter / maxiter;
+			int r = 255 * iter / maxiter;
+			int g = 255 * iter / (maxiter/3);
+			int b = 255 * iter / (maxiter/9);
 			#pragma omp critical
-			gfx_color(gray,gray,gray);
+			gfx_color(r,g,b);
 
 			// Plot the point on the screen.
 			#pragma omp critical
@@ -94,7 +97,7 @@ int main( int argc, char *argv[] )
 
 	// Maximum number of iterations to compute.
 	// Higher values take longer but have more detail.
-	int maxiter=500;
+	int maxiter=1000; //default 500
 
 	// Open a new window.
 	gfx_open(640,480,"Mandelbrot Fractal");
