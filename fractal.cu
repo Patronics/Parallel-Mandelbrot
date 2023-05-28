@@ -2,7 +2,7 @@
 fractal.cu - Parallel interactive Mandelbrot Fractal Display
 based on starting code for CSE 30341 Project 3.
 */
-
+extern "C" {
 #include "gfx.h"
 
 #include <stdlib.h>
@@ -299,4 +299,5 @@ int main( int argc, char *argv[] ){
 	}
 
 	return 0;
+}
 }
