@@ -57,10 +57,14 @@ static int compute_point( double x, double y, int max )
 		double z_realsquared = 0;
 		double z_imaginarysquared = 0;
 		for (iter = 0; iter < max; iter++){
-			if(z_real == 0)
+			if(z_imaginary == 0)
 			{
 				z = cpow(z,2) + alpha;
-				if(cabs(z) >= 4.0) {
+				z_real=creal(z);
+				z_imaginary=cimag(z);
+				z_realsquared = z_real * z_real;
+				z_imaginarysquared = z_imaginary * z_imaginary;
+				if (z_realsquared + z_imaginarysquared >= 4.0) {
 					iter++;
 					break;
 				}
