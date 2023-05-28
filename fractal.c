@@ -57,7 +57,7 @@ static int compute_point( double x, double y, int max )
 		double z_realsquared = 0;
 		double z_imaginarysquared = 0;
 		for (iter = 0; iter < max; iter++){
-			if(z_imaginary == 0)
+			if(y ==0 && z_imaginary == 0)
 			{
 				z = cpow(z,2) + alpha;
 				z_real=creal(z);
