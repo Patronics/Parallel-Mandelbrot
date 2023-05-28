@@ -13,7 +13,7 @@ based on starting code for CSE 30341 Project 3.
 #include <complex.h>
 #include <time.h>
 
-#include <omp.h>
+#include <cuda.h>
 
 typedef struct coordSet {
 	double xmin;
@@ -74,9 +74,9 @@ void compute_image(coordSet* coords)
 	int height = gfx_ysize();
 
 	// For every pixel i,j, in the image...
-	#pragma omp parallel for schedule(dynamic)
+	// #pragma omp parallel for schedule(dynamic)
 	for(j=0;j<height;j++) {
-		#pragma omp parallel for schedule(dynamic)
+		// #pragma omp parallel for schedule(dynamic)
 		for(i=0;i<width;i++) {
 			// Scale from pixels i,j to coordinates x,y
 			double x = xmin + i*(xmax-xmin)/width;
