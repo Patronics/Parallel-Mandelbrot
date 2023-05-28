@@ -130,7 +130,7 @@ void reDraw(coordSet* coords){
 
 	// this is not the actual block size and thread count
 	cudaMemcpy(colorSet, c, n * sizeof(colors), cudaMemcpyHostToDevice);
-	compute_image <<<n, 1>>>(coords, width, height, colorSet);
+	compute_image <<<1, n, n*sizeof(colorSet)>>>(coords, width, height, colorSet);
 	cudaMemcpy(c, colorSet, n * sizeof(colors), cudaMemcpyDeviceToHost);
 
 	for (int i = 0; i < width; i++)

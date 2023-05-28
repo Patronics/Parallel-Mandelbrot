@@ -147,6 +147,13 @@ void gfx_clear_color( int r, int g, int b )
 	XChangeWindowAttributes(gfx_display,gfx_window,CWBackPixel,&attr);
 }
 
+/* Flush all previous output to the window. */
+
+void gfx_flush()
+{
+	XFlush(gfx_display);
+}
+
 int gfx_event_waiting()
 {
        XEvent event;
@@ -217,13 +224,6 @@ int gfx_xpos()
 int gfx_ypos()
 {
 	return saved_ypos;
-}
-
-/* Flush all previous output to the window. */
-
-void gfx_flush()
-{
-	XFlush(gfx_display);
 }
 
 int gfx_xsize()
