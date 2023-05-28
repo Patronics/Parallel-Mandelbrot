@@ -41,7 +41,7 @@ and cpow() to compute the absolute values and powers of
 complex values.
 */
 
-static int compute_point( double x, double y, int max )
+__device__ int compute_point( double x, double y, int max )
 {
 	double z_real = 0;
 	double z_imaginary = 0;
@@ -64,12 +64,19 @@ static int compute_point( double x, double y, int max )
 	return iter;
 }
 
+__device__ void draw_point(int i, int j, int r, int g, int b)
+{
+	gfx_color(r, g, b);
+	// Plot the point on the screen.
+	gfx_point(i, j);
+}
+
 /*
 Compute an entire image, writing each point to the given bitmap.
 Scale the image to the range (xmin-xmax,ymin-ymax).
 */
 
-__global__ void compute_image(coordSet* coords)
+__global__ void compute_image(coordSet* coords, int width, int height)
 {
 	double xmin=coords->xmin;
 	double xmax=coords->xmax;
@@ -80,9 +87,6 @@ __global__ void compute_image(coordSet* coords)
     int my_i = blockDim.x * blockIdx.x + threadIdx.x;
     int my_j = blockDim.y * blockIdx.y + threadIdx.y;
 
-	int width = 640;
-	int height = 480;
-
     double x = xmin + my_i*(xmax-xmin)/width;
 	double y = ymin + my_j*(ymax-ymin)/height;
 
@@ -92,12 +96,6 @@ __global__ void compute_image(coordSet* coords)
     int r = 255 * iter / maxiter;
 	int g = 255 * iter / (maxiter/30);
 	int b = 255 * iter / (maxiter/100);
-
-    {
-		gfx_color(r,g,b);
-		// Plot the point on the screen.
-		gfx_point(my_i,my_j);
-	}
 }
 
 void setMidpoints(coordSet* coords){
@@ -120,7 +118,7 @@ void reDraw(coordSet* coords){
 	clock_gettime(CLOCK_MONOTONIC, &startTime);
 
 	// this is not the actual block size and thread count
-	compute_image <<<1, thread_count>>>(coords);
+	compute_image <<<1, thread_count>>>(coords, width, height);
     cudaDeviceSynchronize();
 
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
