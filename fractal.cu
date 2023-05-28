@@ -115,9 +115,10 @@ void reDraw(coordSet* coords){
     int width = gfx_xsize();
 	int height = gfx_ysize();
 
-    int block_count = width * height;
+    int n = width * height;
 
-	colors* colorSet = (colors*)malloc(height * width * sizeof(struct colors));
+	colors* colorSet, c;
+	cudaMalloc(&coloSet, n * sizeof(colors));
 	// Show the configuration, just in case you want to recreate it.
 	printf("coordinates: %lf %lf %lf %lf\n",coords->xmin,coords->xmax,coords->ymin,coords->ymax);
 	// Display the fractal image
@@ -127,8 +128,9 @@ void reDraw(coordSet* coords){
 	clock_gettime(CLOCK_MONOTONIC, &startTime);
 
 	// this is not the actual block size and thread count
-	compute_image <<<block_count, 1>>>(coords, width, height, colorSet);
-    cudaDeviceSynchronize();
+	cudaMemcpy(colorSet, c, n * sizeof(colors), cudaMemcpyHostToDevice);
+	compute_image <<<n, 1>>>(coords, width, height, colorSet);
+	cudaMemcpy(c, colorSet, n * sizeof(colors), cudaMemcpyDeviceToHost);
 
 	for (int i = 0; i < width; i++)
 		for (int j = 0; j < height; j++)
