@@ -114,6 +114,7 @@ void reDraw(coordSet* coords){
 	double runTime;
 	clock_gettime(CLOCK_MONOTONIC, &startTime);
 
+	// this is not the actual block size and thread count
 	compute_image <<<1, thread_count>>>(coords);
     cudaDeviceSynchronize();
 
