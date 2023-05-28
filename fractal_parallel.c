@@ -24,6 +24,12 @@ typedef struct coordSet {
 	double ymid;
 } coordSet;
 
+struct colors {
+	int r;
+	int g;
+	int b;
+};
+
 int thread_count = 4; //default setting, can be used to test for-loop under diff # of threads
 
 /*
@@ -96,7 +102,9 @@ void compute_image(coordSet* coords)
 
 	int width = gfx_xsize();
 	int height = gfx_ysize();
-
+	
+	struct colors* colorSet = malloc(height*width*sizeof(struct colors));
+		
 	// For every pixel i,j, in the image...
 	double start_time = omp_get_wtime();
 	#pragma omp parallel for schedule(dynamic)
@@ -115,17 +123,29 @@ void compute_image(coordSet* coords)
 			// Convert a iteration number to an RGB color.
 			// (Change this bit to get more interesting colors.)
 			//int gray = 255 * iter / maxiter;
-			int r = 255 * iter / maxiter;
-			int g = 255 * iter / (maxiter/30);
-			int b = 255 * iter / (maxiter/100);
-			#pragma omp critical (plotpixel)
-			{
-				gfx_color(r,g,b);
+			colorSet[j*width+i].r = 255 * iter / maxiter;
+			colorSet[j*width+i].g = 255 * iter / (maxiter/30);
+			colorSet[j*width+i].b = 255 * iter / (maxiter/100);
+			//#pragma omp critical (plotpixel)
+			//{
+				//gfx_color(r,g,b);
 				// Plot the point on the screen.
-				gfx_point(i,j);
-			}
+				//gfx_point(i,j);
+			//}
 		}
 	}
+
+	for(int i = 0; i < height; i++)
+	{
+		for(int j = 0; j < width; j++)
+		{
+			gfx_color(colorSet[width*i+j].r,colorSet[width*i+j].g,colorSet[width*i+j].b);
+			gfx_point(j,i);
+		}
+	}
+	
+	free(colorSet);
+
 	double end_time = omp_get_wtime();
 	printf("%.5f\n", end_time - start_time);
 }
