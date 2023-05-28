@@ -16,7 +16,7 @@ based on starting code for CSE 30341 Project 3.
 #include <omp.h>
 
 
-#define FAST_COMPLEX
+//#define FAST_COMPLEX
 
 
 typedef struct coordSet {
@@ -84,9 +84,16 @@ static int compute_point( double x, double y, int max )
 		}	
 	
 	#else
-		while( cabs(z)<4 && iter < max ) {
-			z = cpow(z,2) + alpha;
-			iter++;
+		if(y==0){
+			while( cabs(z)<4 && iter < max ) {
+				z = cpow(z,2) + alpha;
+				iter++;
+			}
+		} else {
+			while( cabs(z)<4 && iter < max ) {
+				z = z*z + alpha;
+				iter++;
+			}
 		}
 	#endif
 	return iter;
