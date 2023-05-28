@@ -80,8 +80,8 @@ __global__ void compute_image(coordSet* coords)
     int my_i = blockDim.x * blockIdx.x + threadIdx.x;
     int my_j = blockDim.y * blockIdx.y + threadIdx.y;
 
-	int width = gfx_xsize();
-	int height = gfx_ysize();
+	int width = 640;
+	int height = 480;
 
     double x = xmin + my_i*(xmax-xmin)/width;
 	double y = ymin + my_j*(ymax-ymin)/height;
