@@ -1,5 +1,5 @@
 /*
-fractal.c - Parallel interactive Mandelbrot Fractal Display
+fractal.cu - Parallel interactive Mandelbrot Fractal Display
 based on starting code for CSE 30341 Project 3.
 */
 
@@ -14,9 +14,6 @@ based on starting code for CSE 30341 Project 3.
 #include <time.h>
 
 #include <cuda.h>
-
-#define WARPSZ 32 
-#define MAX_BLKSZ 1024
 
 typedef struct coordSet {
 	double xmin;
@@ -51,9 +48,17 @@ static int compute_point( double x, double y, int max )
 
 	int iter = 0;
 
-	while( cabs(z)<4 && iter < max ) {
-		z = cpow(z,2) + alpha;
-		iter++;
+	if (y == 0) {
+		while (cabs(z) < 4 && iter < max) {
+			z = cpow(z, 2) + alpha;
+			iter++;
+		}
+	}
+	else {
+		while (cabs(z) < 4 && iter < max) {
+			z = z * z + alpha;
+			iter++;
+		}
 	}
 
 	return iter;
