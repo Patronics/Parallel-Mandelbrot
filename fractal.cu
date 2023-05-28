@@ -13,7 +13,10 @@ based on starting code for CSE 30341 Project 3.
 #include <complex.h>
 #include <time.h>
 
-#include <omp.h>
+#include <cuda.h>
+
+#define WARPSZ 32 
+#define MAX_BLKSZ 1024
 
 typedef struct coordSet {
 	double xmin;
@@ -61,45 +64,34 @@ Compute an entire image, writing each point to the given bitmap.
 Scale the image to the range (xmin-xmax,ymin-ymax).
 */
 
-void compute_image(coordSet* coords)
+__global__ void compute_image(coordSet* coords)
 {
-	int i,j;
 	double xmin=coords->xmin;
 	double xmax=coords->xmax;
 	double ymin=coords->ymin;
 	double ymax=coords->ymax;
 	int maxiter=coords->maxiter;
 
+    int my_i = blockDim.x * blockIdx.x + threadIdx.x;
+    int my_j = blockDim.y * blockIdx.y + threadIdx.y;
+
 	int width = gfx_xsize();
 	int height = gfx_ysize();
 
-	// For every pixel i,j, in the image...
-	#pragma omp parallel for schedule(dynamic)
-	for(j=0;j<height;j++) {
-		#pragma omp parallel for schedule(dynamic)
-		for(i=0;i<width;i++) {
-			// Scale from pixels i,j to coordinates x,y
-			double x = xmin + i*(xmax-xmin)/width;
-			double y = ymin + j*(ymax-ymin)/height;
+    double x = xmin + my_i*(xmax-xmin)/width;
+	double y = ymin + my_j*(ymax-ymin)/height;
 
-			// Compute the iterations at x,y
-			int iter = 0;
-			//#pragma omp critical
-			iter = compute_point(x,y,maxiter);
+    int iter = 0;
+    iter = compute_point(x,y,maxiter);
 
-			// Convert a iteration number to an RGB color.
-			// (Change this bit to get more interesting colors.)
-			//int gray = 255 * iter / maxiter;
-			int r = 255 * iter / maxiter;
-			int g = 255 * iter / (maxiter/30);
-			int b = 255 * iter / (maxiter/100);
-			#pragma omp critical (plotpixel)
-			{
-				gfx_color(r,g,b);
-				// Plot the point on the screen.
-				gfx_point(i,j);
-			}
-		}
+    int r = 255 * iter / maxiter;
+	int g = 255 * iter / (maxiter/30);
+	int b = 255 * iter / (maxiter/100);
+
+    {
+		gfx_color(r,g,b);
+		// Plot the point on the screen.
+		gfx_point(my_i,my_j);
 	}
 }
 
@@ -110,6 +102,10 @@ void setMidpoints(coordSet* coords){
 }
 
 void reDraw(coordSet* coords){
+    int width = gfx_xsize();
+	int height = gfx_ysize();
+
+    int thread_count = width * height;
 	// Show the configuration, just in case you want to recreate it.
 	printf("coordinates: %lf %lf %lf %lf\n",coords->xmin,coords->xmax,coords->ymin,coords->ymax);
 	// Display the fractal image
@@ -118,7 +114,8 @@ void reDraw(coordSet* coords){
 	double runTime;
 	clock_gettime(CLOCK_MONOTONIC, &startTime);
 
-	compute_image(coords);
+	compute_image <<<1, thread_count>>>(coords);
+    cudaDeviceSynchronize();
 
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
