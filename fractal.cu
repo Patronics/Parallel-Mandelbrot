@@ -43,21 +43,21 @@ complex values.
 
 static int compute_point( double x, double y, int max )
 {
-	double complex z = 0;
-	double complex alpha = x + I*y;
+	double z_real = 0;
+	double z_imaginary = 0;
+	double z_realsquared = 0;
+	double z_imaginarysquared = 0;
 
 	int iter = 0;
-
-	if (y == 0) {
-		while (cabs(z) < 4 && iter < max) {
-			z = cpow(z, 2) + alpha;
+	for (iter = 0; iter < max; iter++) {
+		z_imaginary = z_real * z_imaginary;
+		z_imaginary = z_imaginary + z_imaginary + y;
+		z_real = z_realsquared - z_imaginarysquared + x;
+		z_realsquared = z_real * z_real;
+		z_imaginarysquared = z_imaginary * z_imaginary;
+		if (z_realsquared + z_imaginarysquared >= 4.0) {
 			iter++;
-		}
-	}
-	else {
-		while (cabs(z) < 4 && iter < max) {
-			z = z * z + alpha;
-			iter++;
+			break;
 		}
 	}
 
@@ -189,7 +189,7 @@ int main( int argc, char *argv[] ){
 	// Higher values take longer but have more detail.
 	const int maxiterDefault = 3000; //default 500
 	
-	coordSet* dispCoords = malloc(sizeof(coordSet));
+	coordSet* dispCoords = (coordSet*)malloc(sizeof(coordSet));
 	
 	if(argv[1] && argv[2] && argv[3] && argv[4] && argv[5]){
 		dispCoords->xmin = atof(argv[1]);
