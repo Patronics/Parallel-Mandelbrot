@@ -26,6 +26,12 @@ typedef struct coordSet {
 } coordSet;
 
 
+struct colors {
+	int r;
+	int g;
+	int b;
+};
+
 /*
 Compute the number of iterations at point x, y
 in the complex space, up to a maximum of maxiter.
@@ -64,19 +70,12 @@ __device__ int compute_point( double x, double y, int max )
 	return iter;
 }
 
-__device__ void draw_point(int i, int j, int r, int g, int b)
-{
-	gfx_color(r, g, b);
-	// Plot the point on the screen.
-	gfx_point(i, j);
-}
-
 /*
 Compute an entire image, writing each point to the given bitmap.
 Scale the image to the range (xmin-xmax,ymin-ymax).
 */
 
-__global__ void compute_image(coordSet* coords, int width, int height)
+__global__ void compute_image(coordSet* coords, int width, int height, colors *colorSet)
 {
 	double xmin=coords->xmin;
 	double xmax=coords->xmax;
@@ -93,11 +92,16 @@ __global__ void compute_image(coordSet* coords, int width, int height)
     int iter = 0;
     iter = compute_point(x,y,maxiter);
 
-    int r = 255 * iter / maxiter;
-	int g = 255 * iter / (maxiter/30);
-	int b = 255 * iter / (maxiter/100);
+    colorSet[my_j * width + my_i].r = 255 * iter / maxiter;
+	colorSet[my_j * width + my_i].g = 255 * iter / (maxiter/30);
+	colorSet[my_j * width + my_i].b = 255 * iter / (maxiter/100);
+}
 
-	draw_point(my_i, my_j, r, g, b);
+void draw_point(int i, int j, colors c)
+{
+	gfx_color(c.r, c.g, c.b);
+	// Plot the point on the screen.
+	gfx_point(i, j);
 }
 
 void setMidpoints(coordSet* coords){
@@ -110,7 +114,9 @@ void reDraw(coordSet* coords){
     int width = gfx_xsize();
 	int height = gfx_ysize();
 
-    int thread_count = width * height;
+    int block_count = width * height;
+
+	colors* colorSet = (colors*)malloc(height * width * sizeof(struct colors));
 	// Show the configuration, just in case you want to recreate it.
 	printf("coordinates: %lf %lf %lf %lf\n",coords->xmin,coords->xmax,coords->ymin,coords->ymax);
 	// Display the fractal image
@@ -120,8 +126,12 @@ void reDraw(coordSet* coords){
 	clock_gettime(CLOCK_MONOTONIC, &startTime);
 
 	// this is not the actual block size and thread count
-	compute_image <<<1, thread_count>>>(coords, width, height);
+	compute_image <<<block_count, 1>>>(coords, width, height, colorSet);
     cudaDeviceSynchronize();
+
+	for (int i = 0; i < width; i++)
+		for (int j = 0; j < height; j++)
+			draw_point(i, j, colorSet[j * width + i]);
 
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
