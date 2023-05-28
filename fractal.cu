@@ -135,12 +135,13 @@ void reDraw(coordSet* coords){
 
 	for (int i = 0; i < width; i++)
 		for (int j = 0; j < height; j++)
-			draw_point(i, j, colorSet[j * width + i]);
+			draw_point(i, j, c[j * width + i]);
 
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
 	fprintf(stderr, "\nrendering frame took %lf seconds\n", runTime);
 
+	free(colorSet);
 }
 
 
