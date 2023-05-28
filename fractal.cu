@@ -117,8 +117,9 @@ void reDraw(coordSet* coords){
 
     int n = width * height;
 
-	colors* colorSet, c;
-	cudaMalloc(&coloSet, n * sizeof(colors));
+	colors* colorSet;
+	colors* c = (colors*)malloc(n * sizeof(colorSet));
+	cudaMalloc(&colorSet, n * sizeof(colors));
 	// Show the configuration, just in case you want to recreate it.
 	printf("coordinates: %lf %lf %lf %lf\n",coords->xmin,coords->xmax,coords->ymin,coords->ymax);
 	// Display the fractal image
