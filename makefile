@@ -1,5 +1,5 @@
 
-all: fractal serialfractal
+all: fractal serialfractal cudafractal
  
 
 ifeq ($(OS),Windows_NT) 
