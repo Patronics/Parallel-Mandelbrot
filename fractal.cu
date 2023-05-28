@@ -131,6 +131,7 @@ void reDraw(coordSet* coords){
 	// this is not the actual block size and thread count
 	cudaMemcpy(colorSet, c, n * sizeof(colors), cudaMemcpyHostToDevice);
 	compute_image <<<1, n, n*sizeof(colorSet)>>>(coords, width, height, colorSet);
+	cudaDeviceSynchronize();
 	cudaMemcpy(c, colorSet, n * sizeof(colors), cudaMemcpyDeviceToHost);
 
 	for (int i = 0; i < width; i++)
@@ -141,7 +142,7 @@ void reDraw(coordSet* coords){
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
 	fprintf(stderr, "\nrendering frame took %lf seconds\n", runTime);
 
-	free(colorSet);
+	cudaFree(colorSet);
 }
 
 
