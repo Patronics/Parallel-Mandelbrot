@@ -96,6 +96,8 @@ __global__ void compute_image(coordSet* coords, int width, int height)
     int r = 255 * iter / maxiter;
 	int g = 255 * iter / (maxiter/30);
 	int b = 255 * iter / (maxiter/100);
+
+	draw_point(my_i, my_j, r, g, b);
 }
 
 void setMidpoints(coordSet* coords){
