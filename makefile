@@ -13,8 +13,11 @@ CC = gcc
 ## Debug flag, run 'make D=1' to enable
 ifneq ($(D),1)
 	CFLAGS	+= -O3
+	NVCCFLAGS += -O3
 else
 	CFLAGS	+= -g3 -Og
+	#nvcc doesn't support most of the optimization and debugging flags
+	NVCCFLAGS += -g -G
 endif
 
 ifeq ($(detected_OS),Darwin)    #MacOS
@@ -30,7 +33,7 @@ serialfractal: fractal.c gfx.c
 	$(CC) fractal.c gfx.c  -Wall $(CFLAGS) -Wno-unknown-pragmas -o serialfractal -lX11 -lm
 
 cudafractal: fractal.cu gfx.c
-	nvcc fractal.cu gfx.c $(CFLAGS) -o cudafractal -lX11 -lm
+	nvcc fractal.cu gfx.c $(NVCCFLAGS) -o cudafractal -lX11 -lm
 
 example: example.c gfx.c
 	gcc example.c gfx.c -o example -lX11 -lm
