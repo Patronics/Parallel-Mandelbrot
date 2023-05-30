@@ -48,15 +48,14 @@ static int compute_point(double x, double y, int max)
 
 	int iter = 0;
 
-	if (y == 0) {
-		while (cabs(z) < 4 && iter < max) {
-			z = cpow(z, 2) + alpha;
+	if(y==0){
+		while( cabs(z)<4 && iter < max ) {
+			z = cpow(z,2) + alpha;
 			iter++;
 		}
-	}
-	else {
-		while (cabs(z) < 4 && iter < max) {
-			z = z * z + alpha;
+	} else {
+		while( cabs(z)<4 && iter < max ) {
+			z = z*z + alpha;
 			iter++;
 		}
 	}

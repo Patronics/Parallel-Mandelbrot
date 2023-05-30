@@ -10,6 +10,13 @@ endif
 
 CC = gcc
 
+## Debug flag, run 'make D=1' to enable
+ifneq ($(D),1)
+	CFLAGS	+= -O3
+else
+	CFLAGS	+= -g3 -Og
+endif
+
 ifeq ($(detected_OS),Darwin)    #MacOS
 	#MacOS X11 Libs need linking in separately
 	CFLAGS += -I/usr/X11R6/include/ -L/usr/X11R6/lib/
