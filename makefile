@@ -23,7 +23,7 @@ serialfractal: fractal.c gfx.c
 	$(CC) fractal.c gfx.c  -Wall $(CFLAGS) -Wno-unknown-pragmas -o serialfractal -lX11 -lm
 
 cudafractal: fractal.cu gfx.c
-	nvcc fractal.cu gfx.c $(CFLAGS) -o cudafractal -lx11 -lm
+	nvcc fractal.cu gfx.c $(CFLAGS) -o cudafractal -lX11 -lm
 
 example: example.c gfx.c
 	gcc example.c gfx.c -o example -lX11 -lm
