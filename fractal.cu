@@ -129,10 +129,10 @@ void reDraw(coordSet* coords){
 	clock_gettime(CLOCK_MONOTONIC, &startTime);
 
 	// this is not the actual block size and thread count
-	cudaMemcpy(colorSet, c, n * sizeof(colors), cudaMemcpyHostToDevice);
+	cudaMemcpy(colorSet, c, n * sizeof(colorSet), cudaMemcpyHostToDevice);
 	compute_image <<<1, n, n*sizeof(colorSet)>>>(coords, width, height, colorSet);
 	cudaDeviceSynchronize();
-	cudaMemcpy(c, colorSet, n * sizeof(colors), cudaMemcpyDeviceToHost);
+	cudaMemcpy(c, colorSet, n * sizeof(colorSet), cudaMemcpyDeviceToHost);
 
 	for (int i = 0; i < width; i++)
 		for (int j = 0; j < height; j++)
