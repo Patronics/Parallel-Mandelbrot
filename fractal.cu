@@ -118,7 +118,7 @@ void reDraw(coordSet* coords){
     int n = width * height;
 
 	colors* colorSet;
-	colors* c = (colors*)malloc(n * sizeof(colors));
+	colors c[n];
 	cudaMalloc(&colorSet, n * sizeof(colors));
 	// Show the configuration, just in case you want to recreate it.
 	printf("coordinates: %lf %lf %lf %lf\n",coords->xmin,coords->xmax,coords->ymin,coords->ymax);
@@ -142,7 +142,6 @@ void reDraw(coordSet* coords){
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
 	fprintf(stderr, "\nrendering frame took %lf seconds\n", runTime);
 
-	free(c);
 	cudaFree(colorSet);
 }
 
