@@ -93,16 +93,16 @@ __global__ void compute_image(coordSet* coords, int width, int height, colors *c
     int iter = 0;
     iter = compute_point(x,y,maxiter);
 
-    colorSet[my_j * width + my_i].r = 255 * iter / maxiter;
-	colorSet[my_j * width + my_i].g = 255 * iter / (maxiter/30);
-	colorSet[my_j * width + my_i].b = 255 * iter / (maxiter/100);
+    colorSet[my_i * width + my_j].r = 255 * iter / maxiter;
+	colorSet[my_i * width + my_j].g = 255 * iter / (maxiter/30);
+	colorSet[my_i * width + my_j].b = 255 * iter / (maxiter/100);
 }
 
 void draw_point(int i, int j, colors c)
 {
 	gfx_color(c.r, c.g, c.b);
 	// Plot the point on the screen.
-	gfx_point(i, j);
+	gfx_point(j, i);
 }
 
 void setMidpoints(coordSet* coords){
@@ -118,7 +118,7 @@ void reDraw(coordSet* coords){
     int n = width * height;
 
 	colors* colorSet;
-	colors* c = (colors*)malloc(n * sizeof(colorSet));
+	colors* c = (colors*)malloc(n * sizeof(colors));
 	cudaMalloc(&colorSet, n * sizeof(colors));
 	// Show the configuration, just in case you want to recreate it.
 	printf("coordinates: %lf %lf %lf %lf\n",coords->xmin,coords->xmax,coords->ymin,coords->ymax);
@@ -129,19 +129,20 @@ void reDraw(coordSet* coords){
 	clock_gettime(CLOCK_MONOTONIC, &startTime);
 
 	// this is not the actual block size and thread count
-	cudaMemcpy(colorSet, c, n * sizeof(colorSet), cudaMemcpyHostToDevice);
-	compute_image <<<1, n, n*sizeof(colorSet)>>>(coords, width, height, colorSet);
+	cudaMemcpy(colorSet, c, n * sizeof(colors), cudaMemcpyHostToDevice);
+	compute_image <<<1, n>>>(coords, width, height, c);
+	cudaMemcpy(c, colorSet, n * sizeof(colors), cudaMemcpyDeviceToHost);
 	cudaDeviceSynchronize();
-	cudaMemcpy(c, colorSet, n * sizeof(colorSet), cudaMemcpyDeviceToHost);
 
-	for (int i = 0; i < width; i++)
-		for (int j = 0; j < height; j++)
-			draw_point(i, j, c[j * width + i]);
+	for (int i = 0; i < height; i++)
+		for (int j = 0; j < width; j++)
+			draw_point(i, j, c[i * width + j]);
 
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
 	fprintf(stderr, "\nrendering frame took %lf seconds\n", runTime);
 
+	free(c);
 	cudaFree(colorSet);
 }
 
