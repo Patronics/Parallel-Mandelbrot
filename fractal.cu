@@ -118,11 +118,11 @@ void reDraw(coordSet* coords){
 	int height = gfx_ysize();
 
     int n = width * height;
+	
 	#define BLOCK_SIZE 16 //TODO bigger blocks are likely faster
-	//#define GRID_SIZE 128
 	
 	dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE); // so your threads are BLOCK_SIZE*BLOCK_SIZE, 256 in this case
-	dim3 dimGrid(width/16, height/16); // 1*1 blocks in a grid
+	dim3 dimGrid(width/BLOCK_SIZE, height/BLOCK_SIZE); // 1*1 blocks in a grid
 
 	struct colorss* colorsset;
 	struct colorss* c = (struct colorss*)malloc(n * sizeof(struct colorss));
@@ -148,6 +148,10 @@ void reDraw(coordSet* coords){
 	if (err != cudaSuccess) printf("%s memcpy2\n", cudaGetErrorString(err));
 	err = cudaDeviceSynchronize();
 	
+	clock_gettime(CLOCK_MONOTONIC, &endTime);
+	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
+	fprintf(stderr, "\calculating frame took %lf seconds\n", runTime);
+	
 	for (int i = 0; i < height; i++)
 		for (int j = 0; j < width; j++){
 			//c[i * width + j].r=j;
@@ -155,7 +159,7 @@ void reDraw(coordSet* coords){
 		}
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
-	fprintf(stderr, "\nrendering frame took %lf seconds\n", runTime);
+	fprintf(stderr, "\ncalculating and rendering frame took %lf seconds\n", runTime);
 
 	free(c);
 	cudaFree(colorsset);
