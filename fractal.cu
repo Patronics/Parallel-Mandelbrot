@@ -118,11 +118,11 @@ void reDraw(coordSet* coords){
 	int height = gfx_ysize();
 
     int n = width * height;
-	#define BLOCK_SIZE 1 //TODO bigger blocks are likely faster
+	#define BLOCK_SIZE 16 //TODO bigger blocks are likely faster
 	//#define GRID_SIZE 128
 	
 	dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE); // so your threads are BLOCK_SIZE*BLOCK_SIZE, 256 in this case
-	dim3 dimGrid(height, width); // 1*1 blocks in a grid
+	dim3 dimGrid(height/16, width/16); // 1*1 blocks in a grid
 
 	struct colorss* colorsset;
 	struct colorss* c = (struct colorss*)malloc(n * sizeof(struct colorss));
