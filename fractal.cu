@@ -91,9 +91,9 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
 	double y = ymin + my_j*(ymax-ymin)/height;
 
     int iter = 0;
-    //iter = compute_point(x,y,maxiter);
+    iter = compute_point(x,y,maxiter);
 	//for(int i=0; i<100000; i++){
-	    colorsset[my_i*width+my_j].r = 255;//* iter / maxiter;
+	    colorsset[my_i*width+my_j].r = 255 * iter / maxiter;
 		colorsset[my_i*width+my_j].g = 255 * iter / (maxiter/30);
 		colorsset[my_i*width+my_j].b = 255 * iter / (maxiter/100);
 	//}
@@ -118,7 +118,7 @@ void reDraw(coordSet* coords){
 	int height = gfx_ysize();
 
     int n = width * height;
-	#define BLOCK_SIZE 1
+	#define BLOCK_SIZE 1 //TODO bigger blocks are likely faster
 	//#define GRID_SIZE 128
 	
 	dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE); // so your threads are BLOCK_SIZE*BLOCK_SIZE, 256 in this case
