@@ -92,11 +92,11 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
 
     int iter = 0;
     //iter = compute_point(x,y,maxiter);
-	for(int i=0; i<100000; i++){
-	    colorsset[i].r = 255;//* iter / maxiter;
-		colorsset[my_i].g = 255 * iter / (maxiter/30);
-		colorsset[my_i].b = 255 * iter / (maxiter/100);
-	}
+	//for(int i=0; i<100000; i++){
+	    colorsset[my_i*width+my_j].r = 255;//* iter / maxiter;
+		colorsset[my_i*width+my_j].g = 255 * iter / (maxiter/30);
+		colorsset[my_i*width+my_j].b = 255 * iter / (maxiter/100);
+	//}
 
 }
 
@@ -118,6 +118,11 @@ void reDraw(coordSet* coords){
 	int height = gfx_ysize();
 
     int n = width * height;
+	#define BLOCK_SIZE 1
+	#define GRID_SIZE 128
+	
+	dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE); // so your threads are BLOCK_SIZE*BLOCK_SIZE, 256 in this case
+	dim3 dimGrid(GRID_SIZE, GRID_SIZE); // 1*1 blocks in a grid
 
 	struct colorss* colorsset;
 	struct colorss* c = (struct colorss*)malloc(n * sizeof(struct colorss));
@@ -136,7 +141,7 @@ void reDraw(coordSet* coords){
 	if (err != cudaSuccess) printf("%s memcpy0 coords\n", cudaGetErrorString(err));
 	err = cudaMemcpy(colorsset, c, n * sizeof(struct colorss), cudaMemcpyHostToDevice);
 	if (err != cudaSuccess) printf("%s memcpy1\n", cudaGetErrorString(err));
-	compute_image <<<1, 1>>>(cudaCoords, width, height, colorsset);
+	compute_image <<<dimGrid, dimBlock>>>(cudaCoords, width, height, colorsset);
 	err = cudaDeviceSynchronize();
 	printf("%s synch\n", cudaGetErrorString(err));
 	err = cudaMemcpy(c, colorsset, n * sizeof(struct colorss), cudaMemcpyDeviceToHost);
