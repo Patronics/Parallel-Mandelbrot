@@ -27,7 +27,7 @@ typedef struct coordSet {
 } coordSet;
 
 
-struct colors {
+struct colorss {
 	int r;
 	int g;
 	int b;
@@ -76,7 +76,7 @@ Compute an entire image, writing each point to the given bitmap.
 Scale the image to the range (xmin-xmax,ymin-ymax).
 */
 
-__global__ void compute_image(coordSet* coords, int width, int height, colors *colorSet)
+__global__ void compute_image(coordSet* coords, int width, int height, struct colorss *colorsset)
 {
 	double xmin=coords->xmin;
 	double xmax=coords->xmax;
@@ -92,13 +92,15 @@ __global__ void compute_image(coordSet* coords, int width, int height, colors *c
 
     int iter = 0;
     iter = compute_point(x,y,maxiter);
+	for(int i=0; i<100000; i++){
+	    colorsset[i].r = 255;// * iter / maxiter;
+		colorsset[i].g = 255;// * iter / (maxiter/30);
+		colorsset[i].b = 255;// * iter / (maxiter/100);
+	}
 
-    colorSet[my_i * width + my_j].r = 255 * iter / maxiter;
-	colorSet[my_i * width + my_j].g = 255 * iter / (maxiter/30);
-	colorSet[my_i * width + my_j].b = 255 * iter / (maxiter/100);
 }
 
-void draw_point(int i, int j, colors c)
+void draw_point(int i, int j, struct colorss c)
 {
 	gfx_color(c.r, c.g, c.b);
 	// Plot the point on the screen.
@@ -117,9 +119,9 @@ void reDraw(coordSet* coords){
 
     int n = width * height;
 
-	colors* colorSet;
-	colors c[n];
-	cudaMalloc(&colorSet, n * sizeof(colors));
+	struct colorss* colorsset;
+	struct colorss* c = (struct colorss*)malloc(n * sizeof(struct colorss));
+	cudaMalloc(&colorsset, n * sizeof(struct colorss));
 	// Show the configuration, just in case you want to recreate it.
 	printf("coordinates: %lf %lf %lf %lf\n",coords->xmin,coords->xmax,coords->ymin,coords->ymax);
 	// Display the fractal image
@@ -127,22 +129,27 @@ void reDraw(coordSet* coords){
 	struct timespec startTime, endTime;
 	double runTime;
 	clock_gettime(CLOCK_MONOTONIC, &startTime);
-
 	// this is not the actual block size and thread count
-	cudaMemcpy(colorSet, c, n * sizeof(colors), cudaMemcpyHostToDevice);
-	compute_image <<<1, n>>>(coords, width, height, c);
-	cudaMemcpy(c, colorSet, n * sizeof(colors), cudaMemcpyDeviceToHost);
-	cudaDeviceSynchronize();
-
+	cudaError_t err = cudaMemcpy(colorsset, c, n * sizeof(struct colorss), cudaMemcpyHostToDevice);
+	if (err != cudaSuccess) printf("%s\n", cudaGetErrorString(err));
+	compute_image <<<1, 1>>>(coords, width, height, colorsset);
+	err = cudaMemcpy(c, colorsset, n * sizeof(struct colorss), cudaMemcpyDeviceToHost);
+	if (err != cudaSuccess) printf("%s\n", cudaGetErrorString(err));
+	err = cudaDeviceSynchronize();
+	//if (err != cudaSuccess)
+	printf("%s\n", cudaGetErrorString(err));
+	
 	for (int i = 0; i < height; i++)
-		for (int j = 0; j < width; j++)
+		for (int j = 0; j < width; j++){
+			//c[i * width + j].r=j;
 			draw_point(i, j, c[i * width + j]);
-
+		}
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
 	fprintf(stderr, "\nrendering frame took %lf seconds\n", runTime);
 
-	cudaFree(colorSet);
+	free(c);
+	cudaFree(colorsset);
 }
 
 
