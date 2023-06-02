@@ -93,9 +93,9 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
     int iter = 0;
     iter = compute_point(x,y,maxiter);
 	//for(int i=0; i<100000; i++){
-	    colorsset[my_i*width+my_j].r = 255 * iter / maxiter;
-		colorsset[my_i*width+my_j].g = 255 * iter / (maxiter/30);
-		colorsset[my_i*width+my_j].b = 255 * iter / (maxiter/100);
+	    colorsset[my_i+width*my_j].r = 255 * iter / maxiter;
+		colorsset[my_i+width*my_j].g = 255 * iter / (maxiter/30);
+		colorsset[my_i+width*my_j].b = 255 * iter / (maxiter/100);
 	//}
 
 }
@@ -122,7 +122,7 @@ void reDraw(coordSet* coords){
 	//#define GRID_SIZE 128
 	
 	dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE); // so your threads are BLOCK_SIZE*BLOCK_SIZE, 256 in this case
-	dim3 dimGrid(height/16, width/16); // 1*1 blocks in a grid
+	dim3 dimGrid(width/16, height/16); // 1*1 blocks in a grid
 
 	struct colorss* colorsset;
 	struct colorss* c = (struct colorss*)malloc(n * sizeof(struct colorss));
