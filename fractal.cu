@@ -91,11 +91,11 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
 	double y = ymin + my_j*(ymax-ymin)/height;
 
     int iter = 0;
-    iter = compute_point(x,y,maxiter);
+    //iter = compute_point(x,y,maxiter);
 	for(int i=0; i<100000; i++){
-	    colorsset[i].r = 255;// * iter / maxiter;
-		colorsset[i].g = 255;// * iter / (maxiter/30);
-		colorsset[i].b = 255;// * iter / (maxiter/100);
+	    colorsset[i].r = 255;//* iter / maxiter;
+		colorsset[my_i].g = 255 * iter / (maxiter/30);
+		colorsset[my_i].b = 255 * iter / (maxiter/100);
 	}
 
 }
@@ -122,6 +122,8 @@ void reDraw(coordSet* coords){
 	struct colorss* colorsset;
 	struct colorss* c = (struct colorss*)malloc(n * sizeof(struct colorss));
 	cudaMalloc(&colorsset, n * sizeof(struct colorss));
+	coordSet* cudaCoords;
+	cudaMalloc(&cudaCoords, sizeof(coordSet));
 	// Show the configuration, just in case you want to recreate it.
 	printf("coordinates: %lf %lf %lf %lf\n",coords->xmin,coords->xmax,coords->ymin,coords->ymax);
 	// Display the fractal image
@@ -130,14 +132,17 @@ void reDraw(coordSet* coords){
 	double runTime;
 	clock_gettime(CLOCK_MONOTONIC, &startTime);
 	// this is not the actual block size and thread count
-	cudaError_t err = cudaMemcpy(colorsset, c, n * sizeof(struct colorss), cudaMemcpyHostToDevice);
-	if (err != cudaSuccess) printf("%s\n", cudaGetErrorString(err));
-	compute_image <<<1, 1>>>(coords, width, height, colorsset);
+	cudaError_t err = cudaMemcpy(cudaCoords, coords,sizeof(coordSet), cudaMemcpyHostToDevice);
+	if (err != cudaSuccess) printf("%s memcpy0 coords\n", cudaGetErrorString(err));
+	err = cudaMemcpy(colorsset, c, n * sizeof(struct colorss), cudaMemcpyHostToDevice);
+	if (err != cudaSuccess) printf("%s memcpy1\n", cudaGetErrorString(err));
+	compute_image <<<1, 1>>>(cudaCoords, width, height, colorsset);
+	err = cudaDeviceSynchronize();
+	printf("%s synch\n", cudaGetErrorString(err));
 	err = cudaMemcpy(c, colorsset, n * sizeof(struct colorss), cudaMemcpyDeviceToHost);
-	if (err != cudaSuccess) printf("%s\n", cudaGetErrorString(err));
+	if (err != cudaSuccess) printf("%s memcpy2\n", cudaGetErrorString(err));
 	err = cudaDeviceSynchronize();
 	//if (err != cudaSuccess)
-	printf("%s\n", cudaGetErrorString(err));
 	
 	for (int i = 0; i < height; i++)
 		for (int j = 0; j < width; j++){
