@@ -143,11 +143,10 @@ void reDraw(coordSet* coords){
 	if (err != cudaSuccess) printf("%s memcpy1\n", cudaGetErrorString(err));
 	compute_image <<<dimGrid, dimBlock>>>(cudaCoords, width, height, colorsset);
 	err = cudaDeviceSynchronize();
-	printf("%s synch\n", cudaGetErrorString(err));
+	if (err != cudaSuccess) printf("%s synch\n", cudaGetErrorString(err));
 	err = cudaMemcpy(c, colorsset, n * sizeof(struct colorss), cudaMemcpyDeviceToHost);
 	if (err != cudaSuccess) printf("%s memcpy2\n", cudaGetErrorString(err));
 	err = cudaDeviceSynchronize();
-	//if (err != cudaSuccess)
 	
 	for (int i = 0; i < height; i++)
 		for (int j = 0; j < width; j++){
