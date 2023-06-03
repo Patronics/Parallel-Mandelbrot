@@ -150,7 +150,7 @@ void reDraw(coordSet* coords){
 	
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
-	fprintf(stderr, "\calculating frame took %lf seconds\n", runTime);
+	fprintf(stderr, "\ncalculating frame took %lf seconds\n", runTime);
 	
 	for (int i = 0; i < height; i++)
 		for (int j = 0; j < width; j++){
@@ -163,6 +163,7 @@ void reDraw(coordSet* coords){
 
 	free(c);
 	cudaFree(colorsset);
+	cudaFree(cudaCoords);
 }
 
 
