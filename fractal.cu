@@ -13,7 +13,6 @@ extern "C" {
 #include <string.h>
 #include <complex.h>
 #include <time.h>
-
 #include <cuda.h>
 
 typedef struct coordSet {
@@ -34,7 +33,7 @@ struct colors {
 };
 
 struct cache {
-	struct colors* hashmap = (struct colors*)malloc(640 * 480 * sizeof(struct colors));
+	struct colors hashmap[640 * 480];
 };
 
 /*
@@ -95,7 +94,7 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
 		double x = xmin + my_i*(xmax-xmin)/width;
 		double y = ymin + my_j*(ymax-ymin)/height;
 
-		int key = floor(x + y + my_i + my_j);
+		int key = floor(x * y);
 
 		if (ch->hashmap[key].r == 0) {
 			int iter = 0;
@@ -174,7 +173,7 @@ void reDraw(coordSet* coords){
 	err = cudaMemcpy(c, colorsSet, n * sizeof(struct colors), cudaMemcpyDeviceToHost);
 	if (err != cudaSuccess) printf("%s memcpy3\n", cudaGetErrorString(err));
 
-	cudaMemcpy(ch, cudaCache, sizeof(struct cache), cudaMemcpyDeviceToHost);
+	err = cudaMemcpy(ch, cudaCache, sizeof(struct cache), cudaMemcpyDeviceToHost);
 	if (err != cudaSuccess) printf("%s memcpy4\n", cudaGetErrorString(err));
 
 	err = cudaDeviceSynchronize();
