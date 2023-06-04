@@ -27,10 +27,14 @@ typedef struct coordSet {
 } coordSet;
 
 
-struct colorss {
+struct colors {
 	int r;
 	int g;
 	int b;
+};
+
+struct cache {
+	struct colors* hashmap = (struct colors*)malloc(640 * 480 * sizeof(struct colors));
 };
 
 /*
@@ -76,7 +80,7 @@ Compute an entire image, writing each point to the given bitmap.
 Scale the image to the range (xmin-xmax,ymin-ymax).
 */
 
-__global__ void compute_image(coordSet* coords, int width, int height, struct colorss *colorsset)
+__global__ void compute_image(coordSet* coords, int width, int height, struct colors *colorsSet, struct cache ch)
 {
 	double xmin=coords->xmin;
 	double xmax=coords->xmax;
@@ -87,20 +91,31 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
     int my_i = blockDim.x * blockIdx.x + threadIdx.x;
     int my_j = blockDim.y * blockIdx.y + threadIdx.y;
 
-    double x = xmin + my_i*(xmax-xmin)/width;
-	double y = ymin + my_j*(ymax-ymin)/height;
+	if (my_i < width && my_j < height) {
+		double x = xmin + my_i*(xmax-xmin)/width;
+		double y = ymin + my_j*(ymax-ymin)/height;
 
-    int iter = 0;
-    iter = compute_point(x,y,maxiter);
-	//for(int i=0; i<100000; i++){
-	    colorsset[my_i+width*my_j].r = 255 * iter / maxiter;
-		colorsset[my_i+width*my_j].g = 255 * iter / (maxiter/30);
-		colorsset[my_i+width*my_j].b = 255 * iter / (maxiter/100);
-	//}
+		int key = floor(x + y + my_i + my_j);
 
+		if (ch.hashmap[key] == NULL) {
+			int iter = 0;
+			iter = compute_point(x,y,maxiter);
+			colorsSet[my_i+width*my_j].r = 255 * iter / maxiter;
+			colorsSet[my_i+width*my_j].g = 255 * iter / (maxiter/30);
+			colorsSet[my_i+width*my_j].b = 255 * iter / (maxiter/100);
+
+			ch.hashmap[key] = colorSet[my_i+width*my_j];
+		}
+
+		else {
+			colorsSet[my_i+width*my_j].r = ch.hashmap[key].r;
+			colorsSet[my_i+width*my_j].g = ch.hashmap[key].g;
+			colorsSet[my_i+width*my_j].b = ch.hashmap[key].b;
+		}
+	}
 }
 
-void draw_point(int i, int j, struct colorss c)
+void draw_point(int i, int j, struct colors c)
 {
 	gfx_color(c.r, c.g, c.b);
 	// Plot the point on the screen.
@@ -110,10 +125,11 @@ void draw_point(int i, int j, struct colorss c)
 void setMidpoints(coordSet* coords){
 	coords->xmid = (coords->xmin+coords->xmax)/2;
 	coords->ymid = (coords->ymin+coords->ymax)/2;
-
 }
 
 void reDraw(coordSet* coords){
+	static struct cache ch;
+
     int width = gfx_xsize();
 	int height = gfx_ysize();
 
@@ -124,9 +140,13 @@ void reDraw(coordSet* coords){
 	dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE); // so your threads are BLOCK_SIZE*BLOCK_SIZE, 256 in this case
 	dim3 dimGrid(width/BLOCK_SIZE, height/BLOCK_SIZE); // 1*1 blocks in a grid
 
-	struct colorss* colorsset;
-	struct colorss* c = (struct colorss*)malloc(n * sizeof(struct colorss));
-	cudaMalloc(&colorsset, n * sizeof(struct colorss));
+	struct colors* colorsSet;
+	struct colors* c = (struct colors*)malloc(n * sizeof(struct colors));
+
+	struct cache cuda_cache;
+	cudaMalloc(&cuda_cache, sizeof(struct cache));
+
+	cudaMalloc(&colorsSet, n * sizeof(struct colors));
 	coordSet* cudaCoords;
 	cudaMalloc(&cudaCoords, sizeof(coordSet));
 	// Show the configuration, just in case you want to recreate it.
@@ -139,13 +159,15 @@ void reDraw(coordSet* coords){
 	// this is not the actual block size and thread count
 	cudaError_t err = cudaMemcpy(cudaCoords, coords,sizeof(coordSet), cudaMemcpyHostToDevice);
 	if (err != cudaSuccess) printf("%s memcpy0 coords\n", cudaGetErrorString(err));
-	err = cudaMemcpy(colorsset, c, n * sizeof(struct colorss), cudaMemcpyHostToDevice);
+	err = cudaMemcpy(colorsSet, c, n * sizeof(struct colors), cudaMemcpyHostToDevice);
 	if (err != cudaSuccess) printf("%s memcpy1\n", cudaGetErrorString(err));
-	compute_image <<<dimGrid, dimBlock>>>(cudaCoords, width, height, colorsset);
+	cudaMemcy(cuda_cache, ch, sizeof(struct cache), cudaMemcpyHostToDevice);
+	compute_image <<<dimGrid, dimBlock>>>(cudaCoords, width, height, colorsSet, cuda_cache);
 	err = cudaDeviceSynchronize();
 	if (err != cudaSuccess) printf("%s synch\n", cudaGetErrorString(err));
-	err = cudaMemcpy(c, colorsset, n * sizeof(struct colorss), cudaMemcpyDeviceToHost);
+	err = cudaMemcpy(c, colorsSet, n * sizeof(struct colors), cudaMemcpyDeviceToHost);
 	if (err != cudaSuccess) printf("%s memcpy2\n", cudaGetErrorString(err));
+	cudaMemcy(ch, cuda_cache, sizeof(struct cache), cudaMemcpyHostToDevice);
 	err = cudaDeviceSynchronize();
 	
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
@@ -162,7 +184,7 @@ void reDraw(coordSet* coords){
 	fprintf(stderr, "\ncalculating and rendering frame took %lf seconds\n", runTime);
 
 	free(c);
-	cudaFree(colorsset);
+	cudaFree(colorsSet);
 	cudaFree(cudaCoords);
 }
 
