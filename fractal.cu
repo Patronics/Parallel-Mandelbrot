@@ -97,20 +97,20 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
 
 		int key = floor(x + y + my_i + my_j);
 
-		if (ch.hashmap[key] == NULL) {
+		if (ch->hashmap[key].r == 0) {
 			int iter = 0;
 			iter = compute_point(x,y,maxiter);
 			colorsSet[my_i+width*my_j].r = 255 * iter / maxiter;
 			colorsSet[my_i+width*my_j].g = 255 * iter / (maxiter/30);
 			colorsSet[my_i+width*my_j].b = 255 * iter / (maxiter/100);
 
-			ch.hashmap[key] = colorSet[my_i+width*my_j];
+			ch->hashmap[key] = colorSet[my_i+width*my_j];
 		}
 
 		else {
-			colorsSet[my_i+width*my_j].r = ch.hashmap[key].r;
-			colorsSet[my_i+width*my_j].g = ch.hashmap[key].g;
-			colorsSet[my_i+width*my_j].b = ch.hashmap[key].b;
+			colorsSet[my_i+width*my_j].r = ch->hashmap[key].r;
+			colorsSet[my_i+width*my_j].g = ch->hashmap[key].g;
+			colorsSet[my_i+width*my_j].b = ch->hashmap[key].b;
 		}
 	}
 }
@@ -128,7 +128,7 @@ void setMidpoints(coordSet* coords){
 }
 
 void reDraw(coordSet* coords){
-	static struct cache ch;
+	static struct cache* ch = (struct cache*)malloc(sizeof(struct cache));
 
     int width = gfx_xsize();
 	int height = gfx_ysize();
@@ -141,14 +141,14 @@ void reDraw(coordSet* coords){
 	dim3 dimGrid(width/BLOCK_SIZE, height/BLOCK_SIZE); // 1*1 blocks in a grid
 
 	struct colors* colorsSet;
-	struct colors* c = (struct colors*)malloc(n * sizeof(struct colors));
-
-	struct cache cuda_cache;
-	cudaMalloc(&cuda_cache, sizeof(struct cache));
-
-	cudaMalloc(&colorsSet, n * sizeof(struct colors));
 	coordSet* cudaCoords;
+	struct colors* c = (struct colors*)malloc(n * sizeof(struct colors));
+	struct cache* cudaCache;
+
+	cudaMalloc(&cudaCache, sizeof(struct cache));
+	cudaMalloc(&colorsSet, n * sizeof(struct colors));
 	cudaMalloc(&cudaCoords, sizeof(coordSet));
+
 	// Show the configuration, just in case you want to recreate it.
 	printf("coordinates: %lf %lf %lf %lf\n",coords->xmin,coords->xmax,coords->ymin,coords->ymax);
 	// Display the fractal image
@@ -159,16 +159,26 @@ void reDraw(coordSet* coords){
 	// this is not the actual block size and thread count
 	cudaError_t err = cudaMemcpy(cudaCoords, coords,sizeof(coordSet), cudaMemcpyHostToDevice);
 	if (err != cudaSuccess) printf("%s memcpy0 coords\n", cudaGetErrorString(err));
+
 	err = cudaMemcpy(colorsSet, c, n * sizeof(struct colors), cudaMemcpyHostToDevice);
 	if (err != cudaSuccess) printf("%s memcpy1\n", cudaGetErrorString(err));
-	cudaMemcy(cuda_cache, ch, sizeof(struct cache), cudaMemcpyHostToDevice);
-	compute_image <<<dimGrid, dimBlock>>>(cudaCoords, width, height, colorsSet, cuda_cache);
+
+	cudaMemcpy(cudaCache, ch, sizeof(struct cache), cudaMemcpyHostToDevice);
+	if (err != cudaSuccess) printf("%s memcpy2\n", cudaGetErrorString(err));
+
+	compute_image <<<dimGrid, dimBlock>>>(cudaCoords, width, height, colorsSet, cudaCache);
+
 	err = cudaDeviceSynchronize();
 	if (err != cudaSuccess) printf("%s synch\n", cudaGetErrorString(err));
+
 	err = cudaMemcpy(c, colorsSet, n * sizeof(struct colors), cudaMemcpyDeviceToHost);
-	if (err != cudaSuccess) printf("%s memcpy2\n", cudaGetErrorString(err));
-	cudaMemcy(ch, cuda_cache, sizeof(struct cache), cudaMemcpyHostToDevice);
+	if (err != cudaSuccess) printf("%s memcpy3\n", cudaGetErrorString(err));
+
+	cudaMemcpy(ch, cudaCache, sizeof(struct cache), cudaMemcpyDeviceToHost);
+	if (err != cudaSuccess) printf("%s memcpy4\n", cudaGetErrorString(err));
+
 	err = cudaDeviceSynchronize();
+	if (err != cudaSuccess) printf("%s synch2\n", cudaGetErrorString(err));
 	
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
@@ -176,7 +186,6 @@ void reDraw(coordSet* coords){
 	
 	for (int i = 0; i < height; i++)
 		for (int j = 0; j < width; j++){
-			//c[i * width + j].r=j;
 			draw_point(i, j, c[i * width + j]);
 		}
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
@@ -186,6 +195,7 @@ void reDraw(coordSet* coords){
 	free(c);
 	cudaFree(colorsSet);
 	cudaFree(cudaCoords);
+	cudaFree(cudaCache);
 }
 
 
