@@ -159,6 +159,7 @@ void reDraw(coordSet* coords){
 
 	free(c);
 	cudaFree(colorsSet);
+	cudaFree(cudaCoords);
 }
 
 
