@@ -15,6 +15,7 @@ extern "C" {
 #include <time.h>
 
 #include <cuda.h>
+#include <omp.h>
 
 typedef struct coordSet {
 	double xmin;
@@ -76,7 +77,7 @@ Compute an entire image, writing each point to the given bitmap.
 Scale the image to the range (xmin-xmax,ymin-ymax).
 */
 
-__global__ void compute_image(coordSet* coords, int width, int height, struct colors *colorsSet)
+__global__ void compute_image(coordSet* coords, int width, int height, struct colors *colorsSet, int i)
 {
 	double xmin=coords->xmin;
 	double xmax=coords->xmax;
@@ -87,13 +88,15 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
     int my_i = blockDim.x * blockIdx.x + threadIdx.x;
     int my_j = blockDim.y * blockIdx.y + threadIdx.y;
 
-    double x = xmin + my_i*(xmax-xmin)/width;
-	double y = ymin + my_j*(ymax-ymin)/height;
+	if (my_i < width && my_j < height) {
+		double x = xmin + my_i*(xmax-xmin)/width;
+		double y = ymin + my_j*(ymax-ymin)/height;
 
-    int iter = compute_point(x,y,maxiter);
-    colorsSet[my_i+width*my_j].r = 255 * iter / maxiter;
-	colorsSet[my_i+width*my_j].g = 255 * iter / (maxiter/30);
-	colorsSet[my_i+width*my_j].b = 255 * iter / (maxiter/100);
+		int iter = compute_point(x,y,maxiter);
+		colorsSet[my_i+width*my_j].r = 255 * iter / maxiter;
+		colorsSet[my_i+width*my_j].g = 255 * iter / (maxiter/30);
+		colorsSet[my_i+width*my_j].b = 255 * iter / (maxiter/100);
+	}
 }
 
 void draw_point(int i, int j, struct colors c)
@@ -116,6 +119,7 @@ void reDraw(coordSet* coords){
     int n = width * height;
 	
 	#define BLOCK_SIZE 16 //TODO bigger blocks are likely faster
+	#define THREAD_COUNT 8
 	
 	dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE); // so your threads are BLOCK_SIZE*BLOCK_SIZE, 256 in this case
 	dim3 dimGrid(width/BLOCK_SIZE, height/BLOCK_SIZE); // 1*1 blocks in a grid
@@ -137,7 +141,14 @@ void reDraw(coordSet* coords){
 	if (err != cudaSuccess) printf("%s memcpy0 coords\n", cudaGetErrorString(err));
 	err = cudaMemcpy(colorsSet, c, n * sizeof(struct colors), cudaMemcpyHostToDevice);
 	if (err != cudaSuccess) printf("%s memcpy1\n", cudaGetErrorString(err));
-	compute_image <<<dimGrid, dimBlock>>>(cudaCoords, width, height, colorsSet);
+
+	int cuda_i;
+	# pragma omp parallel for schedule(dynamic)
+	for (int i = 0; i < THREAD_COUNT; i++) {
+		cudaMemcpy(cuda_i, i, sizeof(int), cudaMemcpyHostToDevice)
+		compute_image <<<dimGrid, dimBlock>>>(cudaCoords, width, height, colorsSet, cuda_i);
+	}
+
 	err = cudaDeviceSynchronize();
 	if (err != cudaSuccess) printf("%s synch\n", cudaGetErrorString(err));
 	err = cudaMemcpy(c, colorsSet, n * sizeof(struct colors), cudaMemcpyDeviceToHost);
