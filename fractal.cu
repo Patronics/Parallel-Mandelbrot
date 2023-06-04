@@ -80,7 +80,7 @@ Compute an entire image, writing each point to the given bitmap.
 Scale the image to the range (xmin-xmax,ymin-ymax).
 */
 
-__global__ void compute_image(coordSet* coords, int width, int height, struct colors *colorsSet, struct cache ch)
+__global__ void compute_image(coordSet* coords, int width, int height, struct colors *colorsSet, struct cache* ch)
 {
 	double xmin=coords->xmin;
 	double xmax=coords->xmax;
@@ -104,7 +104,7 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
 			colorsSet[my_i+width*my_j].g = 255 * iter / (maxiter/30);
 			colorsSet[my_i+width*my_j].b = 255 * iter / (maxiter/100);
 
-			ch->hashmap[key] = colorSet[my_i+width*my_j];
+			ch->hashmap[key] = colorsSet[my_i+width*my_j];
 		}
 
 		else {
