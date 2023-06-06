@@ -3,3 +3,6 @@ fractal
 serialfractal
 cudafractal
 .nova
+*.aux
+*.log
+*synctex.gz
