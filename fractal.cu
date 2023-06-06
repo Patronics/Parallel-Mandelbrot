@@ -94,7 +94,7 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
 		double x = xmin + my_i*(xmax-xmin)/width;
 		double y = ymin + my_j*(ymax-ymin)/height;
 
-		int key = floor(x * y);
+		int key = floor(x + y * 1000);
 
 		if (ch->hashmap[key].r == 0) {
 			int iter = 0;
