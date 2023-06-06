@@ -23,6 +23,8 @@ typedef struct coordSet {
 	int maxiter;
 	double xmid;
 	double ymid;
+	double xShift;
+	double yShift;
 } coordSet;
 
 
@@ -85,6 +87,8 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
 	double xmax=coords->xmax;
 	double ymin=coords->ymin;
 	double ymax=coords->ymax;
+	double xShift=coords->xShift;
+	double yShift=coords->yShift;
 	int maxiter=coords->maxiter;
 
     int my_i = blockDim.x * blockIdx.x + threadIdx.x;
@@ -93,8 +97,8 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
 	if (my_i < width && my_j < height) {
 		double x = xmin + my_i*(xmax-xmin)/width;
 		double y = ymin + my_j*(ymax-ymin)/height;
-
-		int key = floor(x + y * 1000);
+			
+		int key = (my_i - (width * xShift)) + width * (my_j - (height * yShift));
 
 		if (ch->hashmap[key].r == 0) {
 			int iter = 0;
@@ -103,7 +107,9 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
 			colorsSet[my_i+width*my_j].g = 255 * iter / (maxiter/30);
 			colorsSet[my_i+width*my_j].b = 255 * iter / (maxiter/100);
 
-			ch->hashmap[key] = colorsSet[my_i+width*my_j];
+			ch->hashmap[key].r = colorsSet[my_i+width*my_j].r;
+			ch->hashmap[key].g = colorsSet[my_i+width*my_j].g;
+			ch->hashmap[key].b = colorsSet[my_i+width*my_j].b;
 		}
 
 		else {
@@ -230,6 +236,8 @@ void shiftFrame(coordSet* coords, double xShift, double yShift){
 	coords->xmin+=xShift*width;
 	coords->ymax+=yShift*height;
 	coords->ymin+=yShift*height;
+	coords->xShift+=xShift;
+	coords->yShift+=yShift;
 	setMidpoints(coords);
 	reDraw(coords);
 }
@@ -265,6 +273,8 @@ int main( int argc, char *argv[] ){
 		dispCoords->ymin = atof(argv[3]);
 		dispCoords->ymax = atof(argv[4]);
 		dispCoords->maxiter = atoi(argv[5]);
+		dispCoords->xShift = 0;
+		dispCoords->yShift = 0;
 		setMidpoints(dispCoords);
 	}else{
 		dispCoords->xmin=xminDefault;
@@ -272,6 +282,8 @@ int main( int argc, char *argv[] ){
 		dispCoords->ymin=yminDefault;
 		dispCoords->ymax=ymaxDefault;
 		dispCoords->maxiter=maxiterDefault;
+		dispCoords->xShift = 0;
+		dispCoords->yShift = 0;
 		setMidpoints(dispCoords);
 	}
 
