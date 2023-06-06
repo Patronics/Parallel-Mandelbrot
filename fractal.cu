@@ -97,10 +97,12 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
 	if (my_i < width && my_j < height) {
 		double x = xmin + my_i*(xmax-xmin)/width;
 		double y = ymin + my_j*(ymax-ymin)/height;
-			
-		int key = (my_i - (width * xShift)) + width * (my_j - (height * yShift));
+		int flipj = abs(my_j - height);
 
-		if (ch->hashmap[key].r == 0) {
+		int key = (my_i - (width * xShift) + width * (my_j - (height * yShift)));
+		int key2 = (my_i - (width * xShift) + width * (flipj - (height * yShift)));
+
+		if (ch->hashmap[key].r == 0 && ch->hashmap[key].g == 0 && ch->hashmap[key].b == 0) {
 			int iter = 0;
 			iter = compute_point(x,y,maxiter);
 			colorsSet[my_i+width*my_j].r = 255 * iter / maxiter;
@@ -110,7 +112,11 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
 			ch->hashmap[key].r = colorsSet[my_i+width*my_j].r;
 			ch->hashmap[key].g = colorsSet[my_i+width*my_j].g;
 			ch->hashmap[key].b = colorsSet[my_i+width*my_j].b;
-		}
+		
+			ch->hashmap[key2].r = colorsSet[my_i+width*my_j].r;
+                        ch->hashmap[key2].g = colorsSet[my_i+width*my_j].g;
+                        ch->hashmap[key2].b = colorsSet[my_i+width*my_j].b;
+			}
 
 		else {
 			colorsSet[my_i+width*my_j].r = ch->hashmap[key].r;
