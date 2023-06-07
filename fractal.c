@@ -192,8 +192,8 @@ int main( int argc, char *argv[] ){
 	// Maximum number of iterations to compute.
 	// Higher values take longer but have more detail.
 	const int maxiterDefault = 3000; //default 500
-	int windowWidth = 1280;
-	int windowHeight = 960;
+	int windowWidth = 640;
+	int windowHeight = 480;
 	
 	coordSet* dispCoords = malloc(sizeof(coordSet));
 	
