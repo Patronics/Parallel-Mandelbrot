@@ -16,7 +16,7 @@ void usage(){
 
 int main(int argc, char *argv[]){
 	char** approaches = malloc((NUM_APPROACHES+1) * sizeof(char*));
-	approaches[0] = "echo"; //for debug, secret approach 0
+	approaches[0] = "echo"; //for testing, secret approach 0
 	approaches[1] = "./serialfractal";
 	approaches[2] = "./fractal";
 	approaches[3] = "./cudafractal";
@@ -25,18 +25,36 @@ int main(int argc, char *argv[]){
 		usage();
 	}
 	
-	//because just used as arugments anyway, can just keep them as strings
+	//because just used as arugments anyway, can just keep variables as strings
 	char* n = "512";
 	char* m = "512";
 	char* dim = "1600";
-	char* max_iter = "3000";
+	char* max_iter = "100";
+	
 	int approach_number = 1;
 	
 	if(argc == 2){
 		approach_number = atof (argv[1]);
 	}
-	
-	
+	if(argc >= 4){
+		n = argv[1];
+		m = argv[2];
+		if( argc == 4 && atof (argv[3])<NUM_APPROACHES){
+			approach_number = atof (argv[3]);
+		}else{
+			dim = argv[3];
+		}
+	}
+	if(argc >= 5){
+		if( argc == 5 && atof (argv[4])<NUM_APPROACHES){
+			approach_number = atof (argv[4]);
+		}else{
+			max_iter = argv[4];
+		}
+	}
+	if(argc >= 6){
+		approach_number = atof (argv[5]);
+	}
 	execlp(approaches[approach_number],approaches[approach_number], "-1.5", "0.5","-1.0","1.0", max_iter, dim, dim, NULL);
 	
 }
