@@ -25,6 +25,7 @@ typedef struct coordSet {
 	double ymid;
 	double xShift;
 	double yShift;
+	int zoom;
 } coordSet;
 
 
@@ -90,6 +91,7 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
 	double xShift=coords->xShift;
 	double yShift=coords->yShift;
 	int maxiter=coords->maxiter;
+	int zoom=coords->zoom;
 
     int my_i = blockDim.x * blockIdx.x + threadIdx.x;
     int my_j = blockDim.y * blockIdx.y + threadIdx.y;
@@ -97,20 +99,28 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
 	if (my_i < width && my_j < height) {
 		double x = xmin + my_i*(xmax-xmin)/width;
 		double y = ymin + my_j*(ymax-ymin)/height;
-		int flipj = abs(my_j - height) + 1;
+		int flipj;
+		int j_test;
+		int bounds = xmin - (xShift * width);
 
-		int test = xmin - (xShift * width);
-		int key = ((my_i - (xShift * width)) + width * (my_j - (height * yShift)));
-		int key2 = ((my_i - (xShift * width)) + width * (flipj - (height * yShift)));
+		if (yShift >= 0) 
+			j_test = my_j - (yShift * height);
+		else
+			j_test = my_j + (yShift * height);
+		
+		flipj = (height -j_test) + 1;
 
-		if ((ch->hashmap[key].r == 0 && ch->hashmap[key].g == 0 && ch->hashmap[key].b == 0) ||  my_i <= test+2 || xShift > 0) {
+		int key = ((my_i - (xShift * width)) + width * j_test);
+		int key2 = ((my_i - (xShift * width)) + width * flipj);
+
+		if (zoom != 0 || (ch->hashmap[key].r == 0 && ch->hashmap[key].g == 0 && ch->hashmap[key].b == 0) || xShift > 0 || (my_i <= bounds+2) || (my_j > abs(yShift * height) && yShift != 0)) {
 			int iter = 0;
 			iter = compute_point(x,y,maxiter);
 			colorsSet[my_i+width*my_j].r = 255 * iter / maxiter;
 			colorsSet[my_i+width*my_j].g = 255 * iter / (maxiter/30);
 			colorsSet[my_i+width*my_j].b = 255 * iter / (maxiter/100);
 
-			if (xShift == 0 && yShift == 0) {;
+			if (xShift == 0 && yShift == 0 && zoom == 0) {;
 				ch->hashmap[key].r = colorsSet[my_i+width*my_j].r;
 				ch->hashmap[key].g = colorsSet[my_i+width*my_j].g;
 				ch->hashmap[key].b = colorsSet[my_i+width*my_j].b;
@@ -220,6 +230,7 @@ void zoomIn(coordSet* coords,double extent){
 	coords->xmin=coords->xmid-(width/extent);
 	coords->ymax=coords->ymid+(height/extent);
 	coords->ymin=coords->ymid-(height/extent);
+	coords->zoom -= 1;
 	setMidpoints(coords);
 	reDraw(coords);
 }
@@ -232,6 +243,7 @@ void zoomOut(coordSet* coords, double extent){
 	coords->xmin=coords->xmid-(width*extent);
 	coords->ymax=coords->ymid+(height*extent);
 	coords->ymin=coords->ymid-(height*extent);
+	coords->zoom += 1;
 	setMidpoints(coords);
 	reDraw(coords);
 }
@@ -283,6 +295,7 @@ int main( int argc, char *argv[] ){
 		dispCoords->maxiter = atoi(argv[5]);
 		dispCoords->xShift = 0;
 		dispCoords->yShift = 0;
+		dispCoords->zoom = 0;
 		setMidpoints(dispCoords);
 	}else{
 		dispCoords->xmin=xminDefault;
@@ -292,6 +305,7 @@ int main( int argc, char *argv[] ){
 		dispCoords->maxiter=maxiterDefault;
 		dispCoords->xShift = 0;
 		dispCoords->yShift = 0;
+		dispCoords->zoom = 0;
 		setMidpoints(dispCoords);
 	}
 
