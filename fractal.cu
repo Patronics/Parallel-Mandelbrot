@@ -247,7 +247,6 @@ int main( int argc, char *argv[] ){
 		windowWidth = atof(argv[6]);
 		windowHeight = atof(argv[7]);
 	}
-	
 	if(argc>9){
 		numBlocks = atof(argv[8]);
 		threadsPerBlock = atof(argv[9]);
