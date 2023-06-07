@@ -33,6 +33,7 @@ int main(int argc, char *argv[]){
 	//because just used as arugments anyway, can just keep variables as strings
 	char* n = "512";
 	char* m = "512";
+	//n and m are unused in non-cuda implementations
 	char* dim = "1600";
 	char* max_iter = "100";
 	
@@ -60,7 +61,7 @@ int main(int argc, char *argv[]){
 	if(argc >= 6){
 		approach_number = atof (argv[5]);
 	}
-	execlp(approaches[approach_number],approaches[approach_number], "-1.5", "0.5","-1.0","1.0", max_iter, dim, dim, NULL);
+	execlp(approaches[approach_number],approaches[approach_number], "-1.5", "0.5","-1.0","1.0", max_iter, dim, dim, n, m, NULL);
 	
 }
 
