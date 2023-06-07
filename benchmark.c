@@ -61,7 +61,11 @@ int main(int argc, char *argv[]){
 	if(argc >= 6){
 		approach_number = atof (argv[5]);
 	}
-	execlp(approaches[approach_number],approaches[approach_number], "-1.5", "0.5","-1.0","1.0", max_iter, dim, dim, n, m, NULL);
+	
+	if (approach_number > NUM_APPROACHES){
+		usage();
+	}
+	execlp(approaches[approach_number],approaches[approach_number], "-1.0", "1.0","-1.0","1.0", max_iter, dim, dim, n, m, NULL);
 	
 }
 
