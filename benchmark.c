@@ -11,6 +11,11 @@ void usage(){
 	printf("\tdim\t\t=\twidth/height of canvas in pixels (defaults to 1600)\n");
 	printf("\tmax_iter\t=\tmax iterations (defaults to 100)\n\n");
 	printf("\tapproach_number\t=\tapproach number to demonstrate, (defaults to 1, acceptable range from 1 to %d)\n\n", NUM_APPROACHES);
+	printf("\t\tapproach #1: serial implementation\n");
+	printf("\t\tapproach #2: OpenMP implementation\n");
+	printf("\t\tapproach #3: final CUDA implementation\n");
+	//TODO:
+	//printf("approach #4 to ... : intermediate CUDA implementation, with optimizations x, y z\n");
 	exit(1);
 }
 

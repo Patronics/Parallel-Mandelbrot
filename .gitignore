@@ -2,6 +2,7 @@ example
 fractal
 serialfractal
 cudafractal
+benchmark
 .nova
 *.aux
 *.log
