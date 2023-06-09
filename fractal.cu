@@ -6,6 +6,11 @@ extern "C" {
 #include "gfx.h"
 }
 
+#define WIDTH 1280
+#define HEIGHT 960
+//#define WIDTH 640
+//#define HEIGHT 480
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -36,7 +41,7 @@ struct colors {
 };
 
 struct cache {
-	struct colors hashmap[640 * 480];
+	struct colors hashmap[WIDTH * HEIGHT];
 };
 
 /*
@@ -311,7 +316,7 @@ int main( int argc, char *argv[] ){
 
 
 	// Open a new window.
-	gfx_open(640,480,"Mandelbrot Fractal");
+	gfx_open(WIDTH,HEIGHT,"Mandelbrot Fractal");
 
 
 	// Fill it with a dark blue initially.
