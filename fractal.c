@@ -2,8 +2,10 @@
 fractal.c - Parallel interactive Mandelbrot Fractal Display
 based on starting code for CSE 30341 Project 3.
 */
-
+#ifndef NOX
 #include "gfx.h"
+#endif
+
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -24,6 +26,15 @@ typedef struct coordSet {
 	double xmid;
 	double ymid;
 } coordSet;
+
+
+#ifdef NOX
+//can't get dimensions from window if not using x, so share as global instead
+	int global_width=0;
+	int global_height=0;
+#endif
+
+
 
 
 /*
@@ -77,8 +88,13 @@ void compute_image(coordSet* coords)
 	double ymax=coords->ymax;
 	int maxiter=coords->maxiter;
 
+	#ifndef NOX
 	int width = gfx_xsize();
 	int height = gfx_ysize();
+	#else
+	int width = global_width;
+	int height = global_height;
+	#endif
 
 	// For every pixel i,j, in the image...
 	#pragma omp parallel for schedule(dynamic)
@@ -97,6 +113,14 @@ void compute_image(coordSet* coords)
 			// Convert a iteration number to an RGB color.
 			// (Change this bit to get more interesting colors.)
 			//int gray = 255 * iter / maxiter;
+			
+			//volatile prevents the compiler from optimizing these variables away in the no-x version
+			#ifdef NOX
+			volatile int r = 255 * iter / maxiter;
+			volatile int g = 255 * iter / (maxiter/30);
+			volatile int b = 255 * iter / (maxiter/100);
+			
+			#else
 			int r = 255 * iter / maxiter;
 			int g = 255 * iter / (maxiter/30);
 			int b = 255 * iter / (maxiter/100);
@@ -106,6 +130,7 @@ void compute_image(coordSet* coords)
 				// Plot the point on the screen.
 				gfx_point(i,j);
 			}
+			#endif
 		}
 	}
 }
@@ -218,18 +243,25 @@ int main( int argc, char *argv[] ){
 		windowHeight = atof(argv[7]);
 	}
 
+	#ifdef NOX
+	
+	global_width = windowWidth;
+	global_height = windowHeight;
+	
+	#else
 	// Open a new window.
 	gfx_open(windowWidth,windowHeight,"Mandelbrot Fractal");
-
 
 	// Fill it with a dark blue initially.
 	gfx_clear_color(0,0,255);
 	gfx_clear();
+	#endif
 
 	//draw intial position
 	reDraw(dispCoords);
 
-
+	//main loop, only if X window initialized
+	#ifndef NOX
 	while(1) {
 		// Wait for a key or mouse click.
 		int c = gfx_wait();
@@ -297,6 +329,7 @@ int main( int argc, char *argv[] ){
 		}
 //		} else if(c=='q'){
 	}
+	#endif
 
 	return 0;
 }

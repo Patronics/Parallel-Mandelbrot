@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 
 #define NUM_APPROACHES 3
 
@@ -25,6 +26,11 @@ int main(int argc, char *argv[]){
 	approaches[1] = "./serialfractal";
 	approaches[2] = "./fractal";
 	approaches[3] = "./cudafractal";
+	char * approachSuffix = "";
+	//check if running "Xbenchmark" or not
+	if(strchr(argv[0], 'X') == NULL){
+		approachSuffix = "-nox";
+	}
 	
 	if(argc < 2){
 		usage();
@@ -65,7 +71,10 @@ int main(int argc, char *argv[]){
 	if (approach_number > NUM_APPROACHES){
 		usage();
 	}
-	execlp(approaches[approach_number],approaches[approach_number], "-1.0", "1.0","-1.0","1.0", max_iter, dim, dim, n, m, NULL);
+	char approach[32];
+	strcpy(approach, approaches[approach_number]);
+	strcat(approach, approachSuffix);
+	execlp(approach,approach, "-1.0", "1.0","-1.0","1.0", max_iter, dim, dim, n, m, NULL);
 	
 }
 
