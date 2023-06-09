@@ -1,5 +1,13 @@
 example
 fractal
+fractal-nox
 serialfractal
+serialfractal-nox
 cudafractal
+
+benchmark
+Xbenchmark
 .nova
+*.aux
+*.log
+*synctex.gz

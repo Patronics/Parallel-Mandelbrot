@@ -1,5 +1,5 @@
 
-all: fractal serialfractal cudafractal
+all: benchmark fractal fractal-nox serialfractal serialfractal-nox cudafractal
  
 
 ifeq ($(OS),Windows_NT) 
@@ -26,17 +26,27 @@ ifeq ($(detected_OS),Darwin)    #MacOS
 	CC = gcc-13
 endif
 
+benchmark: benchmark.c
+	$(CC) benchmark.c -Wall $(CFLAGS) -o benchmark -lm
+	ln -s benchmark Xbenchmark
+
+
 fractal: fractal.c gfx.c
 	$(CC) fractal.c gfx.c -Wall $(CFLAGS) -fopenmp -o fractal -lX11 -lm
+
+fractal-nox: fractal.c
+	$(CC) fractal.c -Wall $(CFLAGS) -Wno-unused-variable -fopenmp -o fractal-nox -lm -D NOX
+
 
 serialfractal: fractal.c gfx.c
 	$(CC) fractal.c gfx.c  -Wall $(CFLAGS) -Wno-unknown-pragmas -o serialfractal -lX11 -lm
 
+serialfractal-nox: fractal.c
+	$(CC) fractal.c -Wall $(CFLAGS) -Wno-unused-variable -Wno-unknown-pragmas -o serialfractal-nox -lm -D NOX
+
+
 cudafractal: fractal.cu gfx.c
 	nvcc fractal.cu gfx.c $(NVCCFLAGS) -o cudafractal -lX11 -lm
 
-example: example.c gfx.c
-	gcc example.c gfx.c -o example -lX11 -lm
-
 clean:
-	rm -f example fractal serialfractal cudafractal
+	rm -f example fractal fractal-nox serialfractal serialfractal-nox cudafractal cudafractal-nox benchmark Xbenchmark

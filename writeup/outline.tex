@@ -1,0 +1,109 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{todonotes}
+
+\title{Mendlbrot Set Project Outline}
+\author{Group 8}
+\date{June 2023}
+
+\begin{document}
+
+\maketitle
+
+\section*{Project Description}
+
+An implementation of parallel Mandlebrot set computation and visualization. Contains baseline versions, including serial, OpenMP and Cuda fractals. Different versions are expanded via experiments that test various 
+optimizations. 
+
+\textbf{Repository: https://github.com/Patronics/Parallel-Mandelbrot}
+
+\section*{Todo}
+\todo[inline]{Optimize cache implementation}
+\todo[inline]{Cuda-aware MPI exploration}
+\todo[inline]{CPU/GPU workload division}
+\todo[inline]{Leverage multiple GPUs (use ssh keys)}
+\todo[inline]{Exploit ILP in the compute point function in the GPU}
+
+\section*{Added Functionality}
+\begin{itemize}
+    \item Added colors
+    \item Added support for zooming in/out
+    \item Fixed rendering to reduce misrendered pixels
+\end{itemize}
+\section*{Experiments}
+\begin{itemize}
+    \item Baselines
+    \begin{itemize}
+        \item Serial: A non-parallel implementation
+        \item OpenMP: Pure openMP parallelization
+        \item CUDA: CUDA-only parallelization (0.044569)
+    \end{itemize}
+    \item CPU/GPU load balancing
+    \begin{itemize}
+        \item Tested various ratios of workload division
+        \item Minor runtime reduction with a 60\% GPU, 40\% CPU distribution
+    \end{itemize}
+    \item Distribution
+    \begin{itemize}
+        \item Block Distribution vs. Block Cyclic
+        \item Compared different distributions to a one pixel per thread distribution
+        \item Changes not used, as they did not result in significant time savings
+    \end{itemize}
+    \item Launching multiple kernels with openMP
+    \begin{itemize}
+        \item Tested various numbers of threads to launch multiple kernels to distribute workload
+        \item No significant time savings achieved (some runs experienced a slower runtime)
+        \item Latency with starting multiple kernels from an omp-parallel for loop
+    \end{itemize}
+    \item OMP Scheduling
+    \begin{itemize}
+        \item Compared dynamic scheduling to other variations, such as (static, 1)
+        \item Found that (static, 1) assigns a disproportionate workload to select threads
+    \end{itemize}
+    \item Alternatives to cpow and cabs library functions
+    \begin{itemize}
+        \item Found these libraries to be computationally expensive
+        \item Replaced library functionality with manual calculations to achieve significant speedups (1.61177 vs 0.26992)
+        \item cpow special case for z*z vs pos(z, 2) rounding error
+        \item Eventually replaced complex numbers with manual calculations to accomodate cuda branch
+    \end{itemize}
+    \item Process Order
+    \begin{itemize}
+        \item Changed order to collect data points first, then draw all of them
+        \item This changed achieved a significant speedup (reduction to 0.14439)
+        \item Added color struct to store rgb information to facilitate
+    \end{itemize}
+    \item Cuda Block Sizes
+    \begin{itemize}
+        \item Tested different block sizes, such as 1, 16 and 32
+        \item Found that 16 was the most optimal
+        \item 16x8 blocksize and 32x32 gridsize (0.054)
+        \item Tried various windows sizes (8000x8000) 
+        \item This did not facilitate an improvement over 16x16
+    \end{itemize}
+    \item Different GPUs
+    \begin{itemize}
+        \item Tested GPUs: 2060, M6600 Quaddro, 3090
+        \item Performance improved on GPUs with higher amounts of cuda cores
+    \end{itemize}
+    \item Doubles vs Floats
+    \begin{itemize}
+        \item Floats reduced time to 0.005
+        \todo{Does this reduce maximum zoom levels?}
+    \end{itemize}
+    \item Cache
+    \begin{itemize}
+        \item Testing cache implementation to avoid recalculating redundant value (WIP)
+    \end{itemize}
+\end{itemize}
+
+\section*{References}
+\begin{itemize}
+    \item https://developer.nvidia.com/blog/multi-gpu-programming-with-standard-parallel-c-part-2/
+    \item https://developer.nvidia.com/blog/introduction-cuda-aware-mpi/
+    \item https://www.olcf.ornl.gov/wp-
+    content/uploads/2018/12/summit\_workshop\_CUDA-Aware-MPI.pdf
+    \item https://www.open-mpi.org/faq/?category=runcuda
+\end{itemize}
+
+\end{document}

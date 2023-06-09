@@ -221,10 +221,14 @@ int main( int argc, char *argv[] ){
 	// Maximum number of iterations to compute.
 	// Higher values take longer but have more detail.
 	const int maxiterDefault = 3000; //default 500
+	int windowWidth     = 640;
+	int windowHeight    = 480;
+	int numBlocks       = 256
+	int threadsPerBlock = 256;
 	
 	coordSet* dispCoords = (coordSet*)malloc(sizeof(coordSet));
 	
-	if(argv[1] && argv[2] && argv[3] && argv[4] && argv[5]){
+	if(argc>5){
 		dispCoords->xmin = atof(argv[1]);
 		dispCoords->xmax = atof(argv[2]);
 		dispCoords->ymin = atof(argv[3]);
@@ -239,10 +243,18 @@ int main( int argc, char *argv[] ){
 		dispCoords->maxiter=maxiterDefault;
 		setMidpoints(dispCoords);
 	}
+	if(argc>7){
+		windowWidth = atof(argv[6]);
+		windowHeight = atof(argv[7]);
+	}
 
+	if(argc>9){
+		numBlocks = atof(argv[8]);
+		threadsPerBlock = atof(argv[9]);
+	}
 
 	// Open a new window.
-	gfx_open(640,480,"Mandelbrot Fractal");
+	gfx_open(windowWidth,windowHeight,"Mandelbrot Fractal");
 
 
 	// Fill it with a dark blue initially.
