@@ -2,6 +2,10 @@
 fractal.c - Parallel interactive Mandelbrot Fractal Display
 based on starting code for CSE 30341 Project 3.
 */
+
+#define BENCHMARK
+
+
 #ifndef NOX
 #include "gfx.h"
 #endif
@@ -143,8 +147,11 @@ void setMidpoints(coordSet* coords){
 
 void reDraw(coordSet* coords){
 	// Show the configuration, just in case you want to recreate it.
+	#ifndef BENCHMARK
 	printf("coordinates: %lf %lf %lf %lf\n",coords->xmin,coords->xmax,coords->ymin,coords->ymax);
+	#endif
 	// Display the fractal image
+
 
 	struct timespec startTime, endTime;
 	double runTime;
@@ -154,8 +161,30 @@ void reDraw(coordSet* coords){
 
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
+	#ifdef BENCHMARK
+	//get metadata to print
+		#ifndef NOX
+		int width = gfx_xsize();
+		int height = gfx_ysize();
+		#else
+		int width = global_width;
+		int height = global_height;
+		#endif
+		int numThreads = 1;
+		#ifdef OPENMP
+		#pragma omp parallel
+		{
+			#pragma omp single
+			{
+				numThreads = omp_get_num_threads();
+			}
+		}
+		#endif
+	printf("Blocks: %d\tThreads per Block: %d\tSize:%dx%d\tDepth: %d\tTime: %f\n",
+	1, numThreads, width, height, coords->maxiter, runTime);
+	#else
 	fprintf(stderr, "\nrendering frame took %lf seconds\n", runTime);
-
+	#endif
 }
 
 
