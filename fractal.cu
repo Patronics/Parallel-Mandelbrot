@@ -145,7 +145,7 @@ void reDraw(coordSet* coords){
 	coordSet* cudaCoords;
 	cudaMalloc(&cudaCoords, sizeof(coordSet));
 	// Show the configuration, just in case you want to recreate it.
-	printf("coordinates: %lf %lf %lf %lf\n",coords->xmin,coords->xmax,coords->ymin,coords->ymax);
+	//printf("coordinates: %lf %lf %lf %lf\n",coords->xmin,coords->xmax,coords->ymin,coords->ymax);
 	// Display the fractal image
 
 	struct timespec startTime, endTime;
