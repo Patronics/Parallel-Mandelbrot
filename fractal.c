@@ -45,6 +45,9 @@ static int compute_point( double x, double y, int max )
 {
 	double complex z = 0;
 	double complex alpha = x + I*y;
+	
+	if ((cabs(1 - csqrt(1 - 4 * alpha)) <= 1) || (cabs(1 + alpha) <= 0.25))
+                return max;
 
 	int iter = 0;
 
