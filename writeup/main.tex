@@ -64,8 +64,8 @@ Initially, the sets rendered in parallel contained inconsistencies interference 
 The issue was rectified by creating a critical section around the lines dedicated to drawing the pixels in the window.
 This solution introduced overhead, which resulted in us decoupling the loops, and performing rendering after calculations were complete.\\
 
-While implementing these changes, we found that the cpow and cabs operations were computationally expensive.
-To help rectify this, and to fix compatibility issues with CUDA and complex numbers, we created an alternative version of the compute\_point() function.
+While implementing these changes, we found that the \verb|cpow| and \verb|cabs| operations were computationally expensive.
+To help rectify this, and to fix compatibility issues with CUDA and complex numbers, we created an alternative version of the \verb|compute_point()| function.
 The alternative function performs complex number calculations manually, rather than relying on C complex libraries.
 It accomplishes this by splitting z into a real and imaginary component, then combining the components as needed for calculations.
 During this process, we also experimented with using floats instead of doubles throughout the program, but found that this replacement caused rounding errors.
@@ -84,16 +84,16 @@ When the mirror coordinate is processed, it is then able to fetch a color from t
 This modification to the cache reduced the required amount of calculations by half.
 
 In addition to being symmetrical, Mandelbrot sets contain a large interior area that contains the same fill color.
- This area is contained within bulbs and cardioids.
-  We found that the outlines of these areas are defined by the following equations:
+This area is contained within bulbs and cardioids.
+We found that the outlines of these areas are defined by the following equations:
 
 \begin{verbatim}
 Cardioid: cabs(1 - csqrt(1 - 4 * alpha)) <= 1
 Bulb:     cabs(1 + alpha) <= 0.25
 \end{verbatim}
 
-The compute\_point() function initially checks these conditions to verify whether or not the point being computed is within a bulb or cardioid.
-If the condition returns true, compute\_point() simply returns the max iteration value, thus saving time spent on calculations within the function.
+The \verb|compute_point()| function initially checks these conditions to verify whether or not the point being computed is within a bulb or cardioid.
+If the condition returns true, \verb|compute_point()| simply returns the max iteration value, thus saving time spent on calculations within the function.
 
 \subsection{Scheduling and Distribution}
 
@@ -101,7 +101,7 @@ This results of this particular set of experiments varied between the OpenMP and
 While the OpenMP version performed multiple pixel computations per thread, the CUDA version performed most optimally with one pixel per thread.
 Thus, this section will be split into an analysis of the OpenMP and CUDA experiments, respectively.\\
 
-With OpenMP, we specifically tried dynamic and (static, 1) scheduling.
+With OpenMP, we tried, in addition to the default \verb|static| scheduling,  \verb|dynamic| and \verb|(static, 1)| scheduling.
 We also implemented an alternate cyclic distribution method, but found that dynamic produced the best results.\\
 
 The results of our distribution experiments with CUDA are further elaborated on in subsection 2.6.
@@ -149,7 +149,7 @@ When applying transformations (such as vertical and horizontal shifts) to Mandel
 To account for this, we implemented a cache to store the equivalent of a screenful of pixels that do not need to be recalculated.
 For example, in the context of a 640x480 window, the cache stores a total of 307,200 pixel settings.
 The cache is implemented as a struct, which stores an array of color struct objects.
-While the image is being computed, the program is able to bypass the expensive compute\_point() function if a valid value is detected for the corresponding index in the cache.
+While the image is being computed, the program is able to bypass the expensive \verb|compute_point()| function if a valid value is detected for the corresponding index in the cache.
 Instead, it assigns the cached color value to the index currently being computed.
 Since each index of the array represents a pixel of the screen, values are accessed by computing the one dimensional index equivalent, given the local i and j values of each thread, resulting in an O(1) cache access time.
 
@@ -157,12 +157,12 @@ Since each index of the array represents a pixel of the screen, values are acces
 index = my_i+width*my_j
 \end{verbatim}
 
-After transformations are applied, the local i and j values must be adjusted in order to access the correct index.
-This is done by storing the accumulation of the transformations on each axis along with the coordinates, and calculating the adjusted i and j values by reversing these transformations.\\
+After transformations are applied, the local \verb|i| and \verb|j| values must be adjusted in order to access the correct index.
+This is done by storing the accumulation of the transformations on each axis along with the coordinates, and calculating the adjusted \verb|i| and \verb|j| values by reversing these transformations.\\
 
 In addition to the currently implemented cache format, we also explored a color-mapping cache.
-Instead of storing the colors in association with the locations they were assigned to, this cache stores the colors associated with calculated values of "iter".
-However, while this version of the cache requires significantly less storage, it requires a call to the compute\_point() function for each index, and thus results in significantly lower time savings.
+Instead of storing the colors in association with the locations they were assigned to, this cache stores the colors associated with calculated values of \verb|iter|.
+However, while this version of the cache requires significantly less storage, it requires a call to the \verb|compute_point()| function for each index, and thus results in significantly lower time savings.
 This is especially true due to the overall low cost of our color calculations, so we decided not to include this cache implementation in the final version of the project.
 
 \section{Conclusion}
