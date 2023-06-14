@@ -104,21 +104,25 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
 	if (my_i < width && my_j < height) {
 		double x = xmin + my_i*(xmax-xmin)/width;
 		double y = ymin + my_j*(ymax-ymin)/height;
-		int flipj;
-		int j_test;
-		int bounds = xmin - (xShift * width);
+		int flip_j;
+                int j_adj;
+		
+                int bounds = xmin - (xShift * width);
+                int m_bounds = abs(xmax - (xShift * width));
+                int y_bounds = ymin - (yShift * height);
+                int ym_bounds = ymax - (yShift * height);
 
 		if (yShift >= 0) 
-			j_test = my_j - (yShift * height);
+			j_adj = my_j - (yShift * height);
 		else
-			j_test = my_j + (yShift * height);
+			j_adj = my_j + (yShift * height);
 		
-		flipj = (height -j_test) + 1;
+		flip_j = (height -j_adj) + 1;
 
-		int key = ((my_i - (xShift * width)) + width * j_test);
-		int key2 = ((my_i - (xShift * width)) + width * flipj);
+		int key = ((my_i - (xShift * width)) + width * j_adj);
+		int key2 = ((my_i - (xShift * width)) + width * flip_j);
 
-		if (zoom != 0 || (ch->hashmap[key].r == 0 && ch->hashmap[key].g == 0 && ch->hashmap[key].b == 0) || xShift > 0 || (my_i <= bounds+2) || (my_j > abs(yShift * height) && yShift != 0)) {
+		if (zoom != 0 || ch->hashmap[key].r == 0 || (xShift > 0 && my_i > m_bounds) || my_i < bounds || (yShift > 0 && my_j > ym_bounds) || my_j < y_bounds) {
 			int iter = 0;
 			iter = compute_point(x,y,maxiter);
 			colorsSet[my_i+width*my_j].r = 255 * iter / maxiter;
