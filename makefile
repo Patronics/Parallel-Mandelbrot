@@ -32,10 +32,10 @@ benchmark: benchmark.c
 
 
 fractal: fractal.c gfx.c
-	$(CC) fractal.c gfx.c -Wall $(CFLAGS) -fopenmp -o fractal -lX11 -lm
+	$(CC) fractal.c gfx.c -Wall $(CFLAGS) -fopenmp -o fractal -lX11 -lm -D OPENMP
 
 fractal-nox: fractal.c
-	$(CC) fractal.c -Wall $(CFLAGS) -Wno-unused-variable -fopenmp -o fractal-nox -lm -D NOX
+	$(CC) fractal.c -Wall $(CFLAGS) -Wno-unused-variable -fopenmp -o fractal-nox -lm -D NOX -D OPENMP
 
 
 serialfractal: fractal.c gfx.c
