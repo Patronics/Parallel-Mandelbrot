@@ -16,6 +16,11 @@ extern "C" {
 
 #include <cuda.h>
 
+int blockSize;
+int blockCount;
+int windowWidth;
+int windowHeight;
+
 typedef struct coordSet {
 	double xmin;
 	double xmax;
@@ -76,24 +81,34 @@ Compute an entire image, writing each point to the given bitmap.
 Scale the image to the range (xmin-xmax,ymin-ymax).
 */
 
-__global__ void compute_image(coordSet* coords, int width, int height, struct colors *colorsSet)
+__global__ void compute_image(coordSet* coords, int width, int height, struct colors *colorsSet, int blockCount, int blockSize, double balance)
 {
 	double xmin=coords->xmin;
 	double xmax=coords->xmax;
 	double ymin=coords->ymin;
 	double ymax=coords->ymax;
 	int maxiter=coords->maxiter;
+	int my_a = (blockDim.x * blockIdx.x + threadIdx.x) % width;
+	int my_b = (blockDim.x * blockIdx.x + threadIdx.x) / width;
+	int stepx = (blockCount * blockSize) % width;
+	int stepy = (blockCount * blockSize) / width;
+	int carry;
 
-    int my_i = blockDim.x * blockIdx.x + threadIdx.x;
-    int my_j = blockDim.y * blockIdx.y + threadIdx.y;
+    //int my_i = blockDim.x * blockIdx.x + threadIdx.x;
+    //int my_j = blockDim.y * blockIdx.y + threadIdx.y;
 
-    double x = xmin + my_i*(xmax-xmin)/width;
-	double y = ymin + my_j*(ymax-ymin)/height;
+	for(int my_i = my_a, my_j = my_b; my_i < width && my_j < height*balance; my_i = (my_i + stepx) % width, my_j = my_j + stepy + carry) {
+		carry = 0;
+    	double x = xmin + my_i*(xmax-xmin)/width;
+		double y = ymin + my_j*(ymax-ymin)/height;
 
-    int iter = compute_point(x,y,maxiter);
-    colorsSet[my_i+width*my_j].r = 255 * iter / maxiter;
-	colorsSet[my_i+width*my_j].g = 255 * iter / (maxiter/30);
-	colorsSet[my_i+width*my_j].b = 255 * iter / (maxiter/100);
+    	int iter = compute_point(x,y,maxiter);
+    	colorsSet[my_i+width*my_j].r = 255 * iter / maxiter;
+		colorsSet[my_i+width*my_j].g = 255 * iter / (maxiter/30);
+		colorsSet[my_i+width*my_j].b = 255 * iter / (maxiter/100);
+
+		if(my_i + stepx >= width) carry = 1;
+	}
 }
 
 void draw_point(int i, int j, struct colors c)
@@ -114,15 +129,19 @@ void reDraw(coordSet* coords){
 	int height = gfx_ysize();
 
     int n = width * height;
+	double balance = 1.0;
+	if(n > 100000000) balance = 0.6;
 	
-	#define BLOCK_SIZE 16 //TODO bigger blocks are likely faster
+	//#define BLOCK_SIZE 16 //TODO bigger blocks are likely faster
 	
-	dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE); // so your threads are BLOCK_SIZE*BLOCK_SIZE, 256 in this case
-	dim3 dimGrid(width/BLOCK_SIZE, height/BLOCK_SIZE); // 1*1 blocks in a grid
+	//dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE); // so your threads are BLOCK_SIZE*BLOCK_SIZE, 256 in this case
+	//dim3 dimGrid(width/BLOCK_SIZE, height/BLOCK_SIZE); // 1*1 blocks in a grid
+	dim3 dimGrid(width*width/blockCount, height*height/blockCount);
 
 	struct colors* colorsSet;
 	struct colors* c = (struct colors*)malloc(n * sizeof(struct colors));
 	cudaMalloc(&colorsSet, n * sizeof(struct colors));
+
 	coordSet* cudaCoords;
 	cudaMalloc(&cudaCoords, sizeof(coordSet));
 	// Show the configuration, just in case you want to recreate it.
@@ -135,27 +154,33 @@ void reDraw(coordSet* coords){
 	// this is not the actual block size and thread count
 	cudaError_t err = cudaMemcpy(cudaCoords, coords,sizeof(coordSet), cudaMemcpyHostToDevice);
 	if (err != cudaSuccess) printf("%s memcpy0 coords\n", cudaGetErrorString(err));
+
 	err = cudaMemcpy(colorsSet, c, n * sizeof(struct colors), cudaMemcpyHostToDevice);
 	if (err != cudaSuccess) printf("%s memcpy1\n", cudaGetErrorString(err));
-	compute_image <<<dimGrid, dimBlock>>>(cudaCoords, width, height, colorsSet);
-	err = cudaDeviceSynchronize();
-	if (err != cudaSuccess) printf("%s synch\n", cudaGetErrorString(err));
-	err = cudaMemcpy(c, colorsSet, n * sizeof(struct colors), cudaMemcpyDeviceToHost);
-	if (err != cudaSuccess) printf("%s memcpy2\n", cudaGetErrorString(err));
-	err = cudaDeviceSynchronize();
-	
-	clock_gettime(CLOCK_MONOTONIC, &endTime);
-	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
-	fprintf(stderr, "calculating frame took %lf seconds\n", runTime);
+
+	if (balance > 0.0) {
+		compute_image <<<blockCount, blockSize>>>(cudaCoords, width, height, colorsSet, blockCount, blockSize, balance);
+
+		err = cudaDeviceSynchronize();
+		if (err != cudaSuccess) printf("%s synch0\n", cudaGetErrorString(err));
+
+		err = cudaMemcpy(c, colorsSet, n * sizeof(struct colors), cudaMemcpyDeviceToHost);
+		if (err != cudaSuccess) printf("%s memcpy2\n", cudaGetErrorString(err));
+
+		err = cudaDeviceSynchronize();
+		if (err != cudaSuccess) printf("%s synch1\n", cudaGetErrorString(err));
+	}
 	
 	for (int i = 0; i < height; i++)
 		for (int j = 0; j < width; j++){
-			//c[i * width + j].r=j;
 			draw_point(i, j, c[i * width + j]);
 		}
+
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
-	fprintf(stderr, "\ncalculating and rendering frame took %lf seconds\n", runTime);
+	
+	printf("Blocks: %d\tThreads per Block: %d\tSize:%dx%d\tDepth: %d\tTime: %f\n",
+	blockSize, blockCount, width, height, coords->maxiter, runTime);
 
 	free(c);
 	cudaFree(colorsSet);
@@ -211,6 +236,14 @@ void reflect(coordSet* coords){
 	reDraw(coords);
 }
 
+void usage(){
+    printf("Usage: benchmark [n] [m] [dim] [max_iter]\n");
+    printf("\tn\t\t=\tnumber of blocks (defaults to 512)\n");
+    printf("\tm\t\t=\tthreads per block (defaults to 512)\n");
+    printf("\tdim\t\t=\twidth/height of canvas in pixels (defaults to 1600)\n");
+    printf("\tmax_iter\t=\tmax iterations (defaults to 100)\n\n");
+    exit(1);
+}
 
 int main( int argc, char *argv[] ){
 	// The initial boundaries of the fractal image in x,y space.
@@ -221,10 +254,10 @@ int main( int argc, char *argv[] ){
 	// Maximum number of iterations to compute.
 	// Higher values take longer but have more detail.
 	const int maxiterDefault = 3000; //default 500
-	int windowWidth     = 640;
-	int windowHeight    = 480;
-	int numBlocks       = 256
-	int threadsPerBlock = 256;
+	windowWidth     = 640;
+	windowHeight    = 480;
+	blockCount 		= 256;
+	blockSize	    = 256;
 	
 	coordSet* dispCoords = (coordSet*)malloc(sizeof(coordSet));
 	
@@ -243,14 +276,14 @@ int main( int argc, char *argv[] ){
 		dispCoords->maxiter=maxiterDefault;
 		setMidpoints(dispCoords);
 	}
-	if(argc>7){
-		windowWidth = atof(argv[6]);
-		windowHeight = atof(argv[7]);
-	}
 
-	if(argc>9){
-		numBlocks = atof(argv[8]);
-		threadsPerBlock = atof(argv[9]);
+	if(argc>9)
+	{
+		dispCoords->maxiter = atoi(argv[5]);
+		windowWidth = atoi(argv[6]);
+		windowHeight = atoi(argv[7]);
+		blockCount = atoi(argv[8]);
+		blockSize = atoi(argv[9]);
 	}
 
 	// Open a new window.
