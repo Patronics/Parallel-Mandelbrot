@@ -47,9 +47,26 @@ The user can also restore the default position (showing the whole Mandelbrot set
 
 \subsection{Mathematical Optimization}
 
-Initially, the sets rendered in parallel contained inconsistencies due to threads interfering with the color settings of other threads. This was expressed by incorrectly colored pixels rendered at various points of the set. The issue was rectified by creating a critical section around the lines dedicated to drawing the pixels in the window. However, this solution introduced overhead, which resulted in us decoupling the loops, and performing rendering after calculations were complete. 
+Initially, the sets rendered in parallel contained inconsistencies due to threads interfering with the color settings of other threads. This was expressed through incorrectly colored pixels rendered at various points of the set. The issue was rectified by creating a critical section around the lines dedicated to drawing the pixels in the window. However, this solution introduced overhead, which resulted in us decoupling the loops, and performing rendering after calculations were complete. \\
 
+[complex number section] [floating point] [cpow and cabs]\\
 
+Mandelbrot sets are symmetrical across the x-axis. We exploited this symmetry to avoid redundant calculations through mirroring. This optimization is currently implemented in the cached Cuda version of the project. This version computes the mirror value of the coordinate currently being processed, and caches the same color value for both the original coordinate and the mirrored coordinate. \\
+
+\begin{verbatim}
+flip_j = (height - my_j) + 1;
+\end{verbatim}
+
+When the mirror coordinate is processed, it is then able to fetch a color from the cache rather than recalculating it. This modification to the cache reduced the required amount of calculations by half.
+
+In addition to being symmetrical, Mandelbrot sets contain a large interior area that contains the same fill color. This area is contained within bulbs and cardioids. We found that the outlines of these areas are defined by the following equations:
+
+\begin{verbatim}
+Cardioid: cabs(1 - csqrt(1 - 4 * alpha)) <= 1
+Bulb: cabs(1 + alpha) <= 0.25
+\end{verbatim}
+
+The compute\_point() function initially checks these conditions to verify whether or not the point being computed is within a bulb or cardioid. If the condition returns true, compute\_point() simply returns the max iteration value, thus saving time spent on calculations within the function.
 
 \subsection{Scheduling and Distribution}
 
@@ -65,7 +82,7 @@ We noticed this discrepancy and investigated ways of balancing the workload in a
 
 \subsection{Cache}
 
-When applying transformations (such as vertical and horizontal shifts) to Mandelbrot sets, many of the computations are redundant. To account for this, we implemented a cache to store the equivalent of a screenful of pixels that do not need to be recalculated. For example, in the context of a 640x480 window, the cache stores a total of 307,200 pixel settings. The cache is implemented as a struct, which stores an array of color struct objects. While the image is being computed, the program is able to bypass the expensive compute\_point() function if a valid value is detected for the corresponding index in the cache. Instead, it assigns the cached value to the index currently being computed. Since each index of the array represents a pixel of the screen, values are accessed by computing the one dimensional index equivalent, given the local i and j values of each thread, resulting in an O(1) cache access time. 
+When applying transformations (such as vertical and horizontal shifts) to Mandelbrot sets, many of the computations are redundant. To account for this, we implemented a cache to store the equivalent of a screenful of pixels that do not need to be recalculated. For example, in the context of a 640x480 window, the cache stores a total of 307,200 pixel settings. The cache is implemented as a struct, which stores an array of color struct objects. While the image is being computed, the program is able to bypass the expensive compute\_point() function if a valid value is detected for the corresponding index in the cache. Instead, it assigns the cached color value to the index currently being computed. Since each index of the array represents a pixel of the screen, values are accessed by computing the one dimensional index equivalent, given the local i and j values of each thread, resulting in an O(1) cache access time. 
 
 \begin{verbatim}
 index = my_i+width*my_j
@@ -73,7 +90,7 @@ index = my_i+width*my_j
 
 After transformations are applied, the local i and j values must be adjusted in order to access the correct index. This is done by storing the accumulation of the transformations on each axis along with the coordinates, and calculating the adjusted i and j values by reversing these transformations. 
 
-In addition to the currently implemented cache format, we also explored a color-mapping cache. Instead of storing the color in association with the location is was assigned to, this cache stores the color associated with calculated values of "iter". However, while this version of the cache requires significantly less storage, it still requires a call to the compute\_point() function for each index, and thus results in significantly lower time savings. This is especially true due to the overall low cost of our color calculations, so we decided not to include this cache implementation in the final version of the project.
+In addition to the currently implemented cache format, we also explored a color-mapping cache. Instead of storing the color in association with the location is was assigned to, this cache stores the color associated with calculated values of "iter". However, while this version of the cache requires significantly less storage, it requires a call to the compute\_point() function for each index, and thus results in significantly lower time savings. This is especially true due to the overall low cost of our color calculations, so we decided not to include this cache implementation in the final version of the project.
 
 \section{Conclusion}
 
