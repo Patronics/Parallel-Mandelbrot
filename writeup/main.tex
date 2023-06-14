@@ -17,9 +17,9 @@ Jared Push\\Catherine Yaroslavtseva\\\end{tabular}}
 
 \section{Abstract}
 
-The Mandelbrot Set is a set of complex numbers (c) that exhibits intricate fractal patterns, given the parameter that $f_c(z) = z^2 + c$ where z is iterated from 0. In this paper, we investigate various methods of optimizing  the computation and visualization of the Mandelbrot Set, primarily through means of parallelization. The primary purpose of these experiments is to explore different parallel programming environments by expanding on the base code provided by [INSERT]. \\ 
+The Mandelbrot Set is a set of complex numbers (c) that exhibits intricate fractal patterns, given the parameter that $f_c(z) = z^2 + c$ where z is iterated from 0. In this paper, we describe the investigation of various possible methods of optimizing the computation and visualization of the Mandelbrot Set, primarily through means of parallelization. The primary purpose of these experiments is to explore different parallel programming environments by expanding on the base code provided by [INSERT]. We also focused on utilizing the strengths of GPUs and CPUs to find an optimal computational balance for various problem sizes.\\ 
 
-The source code includes a serial version, an OpenMP version, a Cuda version, and various diverging versions of the latter two.
+The source code includes a serial version, an OpenMP version, a Cuda version, and various diverging versions of the latter two. 
 
 \section{Experiments}
 
@@ -47,11 +47,11 @@ The user can also restore the default position (showing the whole Mandelbrot set
 
 \subsection{Mathematical Optimization}
 
-Initially, the sets rendered in parallel contained inconsistencies due to threads interfering with the color settings of other threads. This was expressed through incorrectly colored pixels rendered at various points of the set. The issue was rectified by creating a critical section around the lines dedicated to drawing the pixels in the window. However, this solution introduced overhead, which resulted in us decoupling the loops, and performing rendering after calculations were complete. \\
+Initially, the sets rendered in parallel contained inconsistencies interference between thread color settings. This was expressed through incorrectly colored pixels rendered at various points of the set. The issue was rectified by creating a critical section around the lines dedicated to drawing the pixels in the window. This solution introduced overhead, which resulted in us decoupling the loops, and performing rendering after calculations were complete. \\
 
 While implementing these changes, we found that the cpow and cabs operations were computationally expensive. To help rectify this, and to fix compatibility issues with Cuda and complex numbers, we created an alternative version of the compute\_point() function. The alternative function performs complex number calculations manually, rather than relying on C complex libraries. It accomplishes this by splitting z into a real and imaginary component, then combining the components as needed for calculations. During this process, we also experimented with using floats instead of doubles throughout the program, but found that this replacement caused rounding errors. The rounding errors imposed limitations on the maximum extent of zoom functionality, so we decided to keep decimal data stored as double data types.\\
 
-Mandelbrot sets are symmetrical across the x-axis. We exploited this symmetry to avoid redundant calculations through mirroring. This optimization is currently implemented in the cached Cuda version of the project. This version computes the mirror value of the coordinate currently being processed, and caches the same color value for both the original coordinate and the mirrored coordinate. \\
+Mandelbrot sets are symmetrical across the x-axis. We exploited this symmetry to avoid redundant calculations through mirroring. This optimization is currently implemented in the cached Cuda version of the project. This version computes the mirror value of the coordinate currently being processed, and caches the same color value for both the original coordinate and the mirrored coordinate.
 
 \begin{verbatim}
 flip_j = (height - my_j) + 1;
@@ -82,6 +82,17 @@ Another method we attempted to use to split the workload was to combine OpenMP a
 
 \subsection{Cuda Block Sizes}
 
+After debugging the Cuda implementation, we tested the efficiency of block sizes of 1, 16 and 32 with the following definitions in place: 
+
+\begin{verbatim}
+dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE); 
+dim3 dimGrid(width/BLOCK_SIZE, height/BLOCK_SIZE);
+\end{verbatim}
+
+This was chosen based on a one pixel per thread implementation. While we tested implementations that assigned multiple pixels per thread, we found that in the Cuda version, single pixel assignments facilitated the greatest speedups. 
+
+In the context of these defintions, we eventually settled on 16x16 block dimensions (256 threads), distributed across the grid in 1x1 blocks. Initially, we had hypothesized that larger block sizes would produce better results, but found that a block size of 16 consistently generated the best times. 
+
 \subsection{Cache}
 
 When applying transformations (such as vertical and horizontal shifts) to Mandelbrot sets, many of the computations are redundant. To account for this, we implemented a cache to store the equivalent of a screenful of pixels that do not need to be recalculated. For example, in the context of a 640x480 window, the cache stores a total of 307,200 pixel settings. The cache is implemented as a struct, which stores an array of color struct objects. While the image is being computed, the program is able to bypass the expensive compute\_point() function if a valid value is detected for the corresponding index in the cache. Instead, it assigns the cached color value to the index currently being computed. Since each index of the array represents a pixel of the screen, values are accessed by computing the one dimensional index equivalent, given the local i and j values of each thread, resulting in an O(1) cache access time. 
@@ -92,18 +103,22 @@ index = my_i+width*my_j
 
 After transformations are applied, the local i and j values must be adjusted in order to access the correct index. This is done by storing the accumulation of the transformations on each axis along with the coordinates, and calculating the adjusted i and j values by reversing these transformations. 
 
-In addition to the currently implemented cache format, we also explored a color-mapping cache. Instead of storing the color in association with the location is was assigned to, this cache stores the color associated with calculated values of "iter". However, while this version of the cache requires significantly less storage, it requires a call to the compute\_point() function for each index, and thus results in significantly lower time savings. This is especially true due to the overall low cost of our color calculations, so we decided not to include this cache implementation in the final version of the project.
+.
 
 \section{Conclusion}
 
 \begin{center}
 
-
 \section*{Citations}
 
 \end{center}
 
-\section{Appendix}
+\begin{center}
+
+\section*{Appendix}
+
+\end{center}
+
 \appendix
 
 \section{Source Code}
@@ -117,3 +132,5 @@ In addition to the currently implemented cache format, we also explored a color-
 \subsection{Catherine Yaroslavtseva}
 
 \end{document}
+
+In addition to the currently implemented cache format, we also explored a color-mapping cache. Instead of storing the color in association with the location is was assigned to, this cache stores the color associated with calculated values of "iter". However, while this version of the cache requires significantly less storage, it requires a call to the compute\_point() function for each index, and thus results in significantly lower time savings. This is especially true due to the overall low cost of our color calculations, so we decided not to include this cache implementation in the final version of the project
