@@ -49,7 +49,7 @@ The user can also restore the default position (showing the whole Mandelbrot set
 
 Initially, the sets rendered in parallel contained inconsistencies due to threads interfering with the color settings of other threads. This was expressed through incorrectly colored pixels rendered at various points of the set. The issue was rectified by creating a critical section around the lines dedicated to drawing the pixels in the window. However, this solution introduced overhead, which resulted in us decoupling the loops, and performing rendering after calculations were complete. \\
 
-[complex number section] [floating point] [cpow and cabs]\\
+While implementing these changes, we found that the cpow and cabs operations were computationally expensive. To help rectify this, and to fix compatibility issues with Cuda and complex numbers, we created an alternative version of the compute\_point() function. The alternative function performs complex number calculations manually, rather than relying on C complex libraries. It accomplishes this by splitting z into a real and imaginary component, then combining the components as needed for calculations. During this process, we also experimented with using floats instead of doubles throughout the program, but found that this replacement caused rounding errors. The rounding errors imposed limitations on the maximum extent of zoom functionality, so we decided to keep decimal data stored as double data types.\\
 
 Mandelbrot sets are symmetrical across the x-axis. We exploited this symmetry to avoid redundant calculations through mirroring. This optimization is currently implemented in the cached Cuda version of the project. This version computes the mirror value of the coordinate currently being processed, and caches the same color value for both the original coordinate and the mirrored coordinate. \\
 
@@ -63,7 +63,7 @@ In addition to being symmetrical, Mandelbrot sets contain a large interior area 
 
 \begin{verbatim}
 Cardioid: cabs(1 - csqrt(1 - 4 * alpha)) <= 1
-Bulb: cabs(1 + alpha) <= 0.25
+Bulb:     cabs(1 + alpha) <= 0.25
 \end{verbatim}
 
 The compute\_point() function initially checks these conditions to verify whether or not the point being computed is within a bulb or cardioid. If the condition returns true, compute\_point() simply returns the max iteration value, thus saving time spent on calculations within the function.
@@ -72,15 +72,15 @@ The compute\_point() function initially checks these conditions to verify whethe
 
 \subsection{Load Balancing}
 
-As the problem size, which is the number of pixels needing to be calculated, increases, the GPU begins to exhibit a timesave over both serial and parallel CPU implementations. For smaller problem sizes, which are ones where the X11 window can fit on either a laptop or desktop monitor, then a CPU, provided that it takes advantage of parallel programming paradigms, is likely to outperform a GPU in rendering all the pixels. However, for larger dimensions that need to be calculated, for example, those in the hundreds of millions of pixels, GPUs will be superior to CPUs.\\
+As the problem size, represented by the number of pixels requiring calculation, increases, the GPU demonstrates a time-saving advantage over both serial and parallel CPU implementations. For smaller problem sizes, where the X11 window fits on a laptop or desktop monitor, a CPU that takes advantage of parallel programming paradigms is likely to outperform a GPU in pixel rendering. However, for larger dimensions, GPUs will generally outperform CPUs.\\
 
-We noticed this discrepancy and investigated ways of balancing the workload in a manner that combining both CPU and GPU efforts would be faster than relying on any of them alone. Through various tests, it was found that with a problem size of over 300 million pixels from the range of (-1.5, -1.0) to (0.5, 1.0) for the bottom left and top right edges and using a maximum of 3,000 iterations, it was found that combining the efforts of a GPU and CPU saved over 10 seconds compared to relying solely on the GPU, over 25 seconds from relying on parallel CPU, and several minutes over a naive serial implementation. This was performed by delegating the top 60 percent of the pixels to the GPU, and the bottom 40 percent of the pixels to the CPU. These calculations were timed with an implementation that does not attempt to break out of loops early for (x,y) coordinates within a certain range. These calculations were also not timed using an implementation that takes advantage of symmetry to avoid repeated computations. However, with an implementation where the problem size of unique computations can be reduced, then greater time improvements can be achieved by delegating more of the workload to the CPU.
-
-\subsection{Cuda Block Sizes}
+We noticed this discrepancy and investigated ways to balance the workload by splitting it between the GPU and CPU. Through various tests, we determined that with a problem size of over 300 million pixels placed between the bounds of (-1.5, -1.0) and (0.5, 1.0) with 3,000 iterations, combining the efforts of a GPU and CPU saved over 10 seconds compared to purely GPU computing. Over 25 seconds were saved compared to the parallel CPU implementation, and several minutes compared to the naive serial implementation. These results were attained by delegating the top 60 percent of the pixels to the GPU, and the bottom 40 percent of the pixels to the CPU. These calculations were timed with an implementation that does not attempt to break out of loops early for (x,y) coordinates within a certain range. These calculations were also not timed using an implementation that takes advantage of symmetry to avoid repeated computations. In an implementation where the problem size of unique computations can be reduced, greater time improvements can be achieved by delegating more of the workload to the CPU. The percentage of the workload assigned to the GPU and CPU can thus be determined dynamically based on the problem size. 
 
 \subsection{Multiple Kernels}
 
 Another method we attempted to use to split the workload was to combine OpenMP and Cuda to launch multiple kernels, each with on own CPU thread. In the process, we found that starting kernels in a parallelized for loop resulted in latency, and ultimately did not result in any time savings. Thus, we chose not to pursue this method further.
+
+\subsection{Cuda Block Sizes}
 
 \subsection{Cache}
 
