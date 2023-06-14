@@ -104,11 +104,12 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
 	int my_b = (blockDim.x * blockIdx.x + threadIdx.x) / width;
 	int stepx = (blockCount * blockSize) % width;
 	int stepy = (blockCount * blockSize) / width;
+	int carry;
     //int my_i = blockDim.x * blockIdx.x + threadIdx.x;
     //int my_j = blockDim.y * blockIdx.y + threadIdx.y;
-	for(int my_i = my_a, my_j = my_b; my_i < width && my_j < height; my_i = (my_i + stepx) % width, my_j = my_j + stepy) {
+	for(int my_i = my_a, my_j = my_b; my_i < width && my_j < height; my_i = (my_i + stepx) % width, my_j = my_j + stepy + carry) {
 		
-	
+		carry = 0;
 		double x = xmin + my_i*(xmax-xmin)/width;
 		double y = ymin + my_j*(ymax-ymin)/height;
 		int flip_j;
@@ -151,6 +152,7 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
 			colorsSet[my_i+width*my_j].g = ch->hashmap[key].g;
 			colorsSet[my_i+width*my_j].b = ch->hashmap[key].b;
 		}
+		if(my_i + stepx >= width) carry = 1;
 	
 		
 	}
