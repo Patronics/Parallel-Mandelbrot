@@ -101,11 +101,12 @@ This results of this particular set of experiments varied between the OpenMP and
 While the OpenMP version performed multiple pixel computations per thread, the CUDA version performed most optimally with one pixel per thread.
 Thus, this section will be split into an analysis of the OpenMP and CUDA experiments, respectively.\\
 
-With OpenMP, we tried, in addition to the default \verb|static| scheduling,  \verb|dynamic| and \verb|(static, 1)| scheduling.
-We also implemented an alternate cyclic distribution method, but found that dynamic produced the best results.\\
+In OpenMP, through testing and trial and error, dynamic scheduling was deemed to be the most optimal method for scheduling. Dynamic scheduling avoids block distribution (such as the default \verb|static| scheduling), which is prone to immense slowdowns, as some threads that must compute values close to the origin will have a significantly higher workload than others.
+However, a purely cyclic distribution (\verb|static, 1|) is also suboptimal because, due to the nature of the problem, it does not give the most ideal balance of workload, as some threads may have a longer workload to finish, as others idle upon completing their assigned portion. This behavior leads to the stripe of values along y=0 tending to continue processing long after the rest of the graphic has been calculated and rendered.
+Dynamic scheduling, with the default blocksize of 1, as defined by the OpenMP standards, solves the flaws of a cyclic distribution while avoiding the serious slowdowns that would be presented by a block distribution with large chunksizes.\\
 
-The results of our distribution experiments with CUDA are further elaborated on in subsection 2.6.
-We experimented primarily with assigning varying amounts of pixels per thread.
+
+The results of our distribution experiments with Cuda are further elaborated on in subsection 2.6. We experimented primarily with assigning varying amounts of pixels per thread. After testing, we determined that one pixel per thread was the most efficient distribution method. 
 
 \subsection{Load Balancing}
 
