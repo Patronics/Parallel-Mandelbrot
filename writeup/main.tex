@@ -22,11 +22,11 @@ In this paper, we describe the investigation of various possible methods of opti
 The primary purpose of these experiments is to explore different parallel programming environments by expanding on the base code provided by [INSERT].
 We also focused on utilizing the strengths of GPUs and CPUs to find an optimal computational balance for various problem sizes.\\ 
 
-The source code includes a serial version, an OpenMP version, a Cuda version, and various diverging versions of the latter two.
+The source code includes a serial version, an OpenMP version, a CUDA version, and various diverging versions of the latter two.
 
 \section{Experiments}
 
-This project involved a number of experiments, including but not limited to checking the viability of different Cuda block sizes, load distribution methods and mathematical optimizations.
+This project involved a number of experiments, including but not limited to checking the viability of different CUDA block sizes, load distribution methods and mathematical optimizations.
 While some changes were universal to all included implementations, the majority were isolated in order to accurately test their effects on the overall runtime.
 Timing information is included within each relevant subsection, as well as a final analysis in the conclusion.
 Effective changes were compiled into a cumulative final branch (main).
@@ -39,7 +39,7 @@ The ability to zoom into the image or pan around it was also not included in the
 Thus, the first stage of this project involved adding coloration to the set and implementing zooming and panning functionality.\\
 
 Colors in our implementation were calculated through simple multiplication and division operations.
-Some versions included a colors struct and stored rgb values as 8-bit integers, but the general calculations remained the same:
+Some versions included a colors struct and stored RGB values as 8-bit integers, but the general calculations remained the same:
 
 \begin{verbatim}
 int r = 255 * iter / maxiter;
@@ -65,7 +65,7 @@ The issue was rectified by creating a critical section around the lines dedicate
 This solution introduced overhead, which resulted in us decoupling the loops, and performing rendering after calculations were complete.\\
 
 While implementing these changes, we found that the cpow and cabs operations were computationally expensive.
-To help rectify this, and to fix compatibility issues with Cuda and complex numbers, we created an alternative version of the compute\_point() function.
+To help rectify this, and to fix compatibility issues with CUDA and complex numbers, we created an alternative version of the compute\_point() function.
 The alternative function performs complex number calculations manually, rather than relying on C complex libraries.
 It accomplishes this by splitting z into a real and imaginary component, then combining the components as needed for calculations.
 During this process, we also experimented with using floats instead of doubles throughout the program, but found that this replacement caused rounding errors.
@@ -73,7 +73,7 @@ The rounding errors imposed limitations on the maximum extent of zoom functional
 
 Mandelbrot sets are symmetrical across the x-axis.
 We exploited this symmetry to avoid redundant calculations through mirroring.
-This optimization is currently implemented in the cached Cuda version of the project.
+This optimization is currently implemented in the cached CUDA version of the project.
 This version computes the mirror value of the coordinate currently being processed, and caches the same color value for both the original coordinate and the mirrored coordinate.
 
 \begin{verbatim}
@@ -97,14 +97,14 @@ If the condition returns true, compute\_point() simply returns the max iteration
 
 \subsection{Scheduling and Distribution}
 
-This results of this particular set of experiments varied between the OpenMP and Cuda implementations of the project.
-While the OpenMP version performed multiple pixel computations per thread, the Cuda version performed most optimally with one pixel per thread.
-Thus, this section will be split into an analysis of the OpenMP and Cuda experiments, respectively.\\
+This results of this particular set of experiments varied between the OpenMP and CUDA implementations of the project.
+While the OpenMP version performed multiple pixel computations per thread, the CUDA version performed most optimally with one pixel per thread.
+Thus, this section will be split into an analysis of the OpenMP and CUDA experiments, respectively.\\
 
 With OpenMP, we specifically tried dynamic and (static, 1) scheduling.
 We also implemented an alternate cyclic distribution method, but found that dynamic produced the best results.\\
 
-The results of our distribution experiments with Cuda are further elaborated on in subsection 2.6.
+The results of our distribution experiments with CUDA are further elaborated on in subsection 2.6.
 We experimented primarily with assigning varying amounts of pixels per thread.
 
 \subsection{Load Balancing}
@@ -124,13 +124,13 @@ The percentage of the workload assigned to the GPU and CPU can thus be determine
 
 \subsection{Multiple Kernels}
 
-Another method we attempted to use to split the workload was to combine OpenMP and Cuda to launch multiple kernels, each with on own CPU thread.
+Another method we attempted to use to split the workload was to combine OpenMP and CUDA to launch multiple kernels, each with on own CPU thread.
 In the process, we found that starting kernels in a parallelized for loop resulted in latency, and ultimately did not result in any time savings.
 Thus, we chose not to pursue this method further.
 
-\subsection{Cuda Block Sizes}
+\subsection{CUDA Block Sizes}
 
-After debugging the Cuda implementation, we tested the efficiency of block sizes of 1, 16 and 32 with the following definitions in place: 
+After debugging the CUDA implementation, we tested the efficiency of block sizes of 1, 16 and 32 with the following definitions in place: 
 
 \begin{verbatim}
 dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE); 
@@ -138,9 +138,9 @@ dim3 dimGrid(width/BLOCK_SIZE, height/BLOCK_SIZE);
 \end{verbatim}
 
 This was chosen based on a one pixel per thread implementation.
-While we tested implementations that assigned multiple pixels per thread, we found that in the Cuda version, single pixel assignments facilitated the greatest speedups.
+While we tested implementations that assigned multiple pixels per thread, we found that in the CUDA version, single pixel assignments facilitated the greatest speedups.
 
-In the context of these defintions, we eventually settled on 16x16 block dimensions (256 threads), distributed across the grid in 1x1 blocks.
+In the context of these definitions, we eventually settled on 16x16 block dimensions (256 threads), distributed across the grid in 1x1 blocks.
 Initially, we had hypothesized that larger block sizes would produce better results, but found that a block size of 16 consistently generated the best times.
 
 \subsection{Cache}
