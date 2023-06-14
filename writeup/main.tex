@@ -1,0 +1,87 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{listings}
+\usepackage{appendix}
+
+\parindent 0pt
+
+\begin{document}
+
+\title{\textbf{Parallelizing the Mandelbrot Set \\ \large Enhancing Performance through Multithreading and GPU Computing}}
+\author{\begin{tabular}{cc}Patrick Leiser\\
+Jared Push\\Catherine Yaroslavtseva\\\end{tabular}}
+
+\date{June 2023}
+
+\maketitle
+
+\section{Abstract}
+
+The Mandelbrot Set is a set of complex numbers (c) that exhibits intricate fractal patterns, given the parameter that $f_c(z) = z^2 + c$ where z is iterated from 0. In this paper, we investigate various methods of optimizing  the calculations and rendering of Mandelbrot Sets, primarily through means of parallelization. The primary purpose of these experiments is to explore different parallel programming environments. The base code was provided by [INSERT]. \\ 
+
+The source code includes a serial version, an OpenMP version, a Cuda version, and various diverging versions of the latter two. [TODO: finish intro]
+
+\section{Experiments}
+
+This project involved a number of experiments, including but not limited to checking the viability of different Cuda block sizes, load distribution methods and mathematical optimizations. While some changes were universal to all included implementations, the majority were isolated in order to accurately test their effects on the overall runtime. Effective changes were compiled into a cumulative final branch (main).
+
+\subsection{Additional Features}
+
+The contents of this section are universal to all implementations of the Mandelbrot Set discussed in this paper. The original serial version of this program rendered monotonous fractals, with pixels distinguished by black, white and shades of gray. The ability to zoom into the image was also not included in the original program. Thus, the first stage of this project involved adding coloration to the set and implementing zoom functionality.
+
+Colors in our implementation were calculated through simple multiplication and division operations. Some versions included a colors struct and stored rgb values as 8-bit integers, but the general calculations remained the same:
+
+\begin{verbatim}
+int r = 255 * iter / maxiter;
+int g = 255 * iter / (maxiter/30);
+int b = 255 * iter / (maxiter/100);
+\end{verbatim}
+
+These calculations produced primarily blue and green shades for the exterior of the zoomed out version of the set, and yellow for the interiors of the bulbs and cardioids. Ultimately, these color calculations were not time-costly compared to implementations that used trigonometric functions and created visually appealing Mandelbrot sets. 
+
+Zoom functionality was added by listening for 'i' and 'o' key actions, with the former zooming in on the set and the latter zooming out on the set. The zoom amount can be customized in the code, and works by using the set ratio to transform the coordinates displayed on the screen.
+
+\subsection{Mathematical Optimization}
+
+Initially, the sets rendered in parallel contained inconsistencies due to threads interfering with the color settings of other threads. This was expressed by incorrectly colored pixels rendered at various points of the set. The issue was rectified by creating a critical section around the lines dedicated to drawing the pixels in the window. However, this solution introduced overhead, which resulted in us decoupling the loops, and performing rendering after calculations were complete. 
+
+
+
+\subsection{Scheduling and Distribution}
+
+\subsection{Load Balancing}
+
+As the problem size, which is the number of pixels needing to be calculated, increases, the GPU begins to exhibit a timesave over both serial and parallel CPU implementations. For smaller problem sizes, which are ones where the X11 window can fit on either a laptop or desktop monitor, then a CPU, provided that it takes advantage of parallel programming paradigms, is likely to outperform a GPU in rendering all the pixels. However, for larger dimensions that need to be calculated, for example, those in the hundreds of millions of pixels, GPUs will be superior to CPUs.\\
+
+We noticed this discrepancy and investigated ways of balancing the workload in a manner that combining both CPU and GPU efforts would be faster than relying on any of them alone. Through various tests, it was found that with a problem size of over 300 million pixels from the range of (-1.5, -1.0) to (0.5, 1.0) for the bottom left and top right edges and using a maximum of 3,000 iterations, it was found that combining the efforts of a GPU and CPU saved over 10 seconds compared to relying solely on the GPU, over 25 seconds from relying on parallel CPU, and several minutes over a naive serial implementation. This was performed by delegating the top 60 percent of the pixels to the GPU, and the bottom 40 percent of the pixels to the CPU. These calculations were timed with an implementation that does not attempt to break out of loops early for (x,y) coordinates within a certain range. These calculations were also not timed using an implementation that takes advantage of symmetry to avoid repeated computations. However, with an implementation where the problem size of unique computations can be reduced, then greater time improvements can be achieved by delegating more of the workload to the CPU.
+
+\subsection{Cuda Block Sizes}
+
+\subsection{Multiple Kernels}
+
+\subsection{Cache}
+
+When performing transformations (such as vertical and horizontal shifts) on Mandelbrot sets, many of the calculations are redundant. To account for this, we implemented a cache to store the equivalent of a screenful of pixels that do not need to be recalculated. For example, in the context of a 640x480 window, the cache stores a total of 307,200 pixel settings. The cache is implemented as a struct, which stores an array of color struct objects. Since each index of the array represents a pixel of the screen, values are accessed by computing the one dimensional index equivalent, given the local i and j values within each thread, resulting in an O(1) cache access time. 
+
+\section{Conclusion}
+
+\begin{center}
+
+\section*{Citations}
+
+\end{center}
+
+\section{Appendix}
+\appendix
+
+\section{Source Code}
+
+\section{Contributions}
+
+\subsection{Patrick Leiser}
+
+\subsection{Jared Pugh}
+
+\subsection{Catherine Yaroslavtseva}
+
+\end{document}
