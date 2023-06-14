@@ -70,6 +70,12 @@ The compute\_point() function initially checks these conditions to verify whethe
 
 \subsection{Scheduling and Distribution}
 
+This results of this particular set of experiments varied between the OpenMP and Cuda implementations of the project. While the OpenMP version performed multiple pixel computations per thread, the Cuda version performed most optimally with one pixel per thread. Thus, this section will be split into an analysis of the OpenMP and Cuda experiments, respectively.\\
+
+With OpenMP, we specifically tried dynamic and (static, 1) scheduling. We also implemented an alternate cyclic distribution method, but found that dynamic produced the best results. \\
+
+The results of our distribution experiments with Cuda are further elaborated on in subsection 2.6. We experimented primarily with assigning varying amounts of pixels per thread. 
+
 \subsection{Load Balancing}
 
 As the problem size, represented by the number of pixels requiring calculation, increases, the GPU demonstrates a time-saving advantage over both serial and parallel CPU implementations. For smaller problem sizes, where the X11 window fits on a laptop or desktop monitor, a CPU that takes advantage of parallel programming paradigms is likely to outperform a GPU in pixel rendering. However, for larger dimensions, GPUs will generally outperform CPUs.\\
@@ -101,17 +107,61 @@ When applying transformations (such as vertical and horizontal shifts) to Mandel
 index = my_i+width*my_j
 \end{verbatim}
 
-After transformations are applied, the local i and j values must be adjusted in order to access the correct index. This is done by storing the accumulation of the transformations on each axis along with the coordinates, and calculating the adjusted i and j values by reversing these transformations. 
+After transformations are applied, the local i and j values must be adjusted in order to access the correct index. This is done by storing the accumulation of the transformations on each axis along with the coordinates, and calculating the adjusted i and j values by reversing these transformations. \\
 
-.
+In addition to the currently implemented cache format, we also explored a color-mapping cache. Instead of storing the colors in association with the locations they were assigned to, this cache stores the colors associated with calculated values of "iter". However, while this version of the cache requires significantly less storage, it requires a call to the compute\_point() function for each index, and thus results in significantly lower time savings. This is especially true due to the overall low cost of our color calculations, so we decided not to include this cache implementation in the final version of the project.
 
 \section{Conclusion}
+
+In conclusion, this paper has done an in-depth analysis of the various optimizations of the Mandelbrot set problem, with an emphasis on parallelization. We were able to achieve significant speedups through a culmination of leveraging CPU and GPU cores, caching, math optimization and distribution, and ultimately produced near real-time generations of Mandelbrot set visualizations. \\
+
+While we have explored various methods, there is still potential for further research and testing to be done in order to achieve even greater performance gains. Additionally, our implementation still lacks components such as mouse interaction, which could enhance its interactivity.
+
+\pagebreak
 
 \begin{center}
 
 \section*{Citations}
 
 \end{center}
+
+\begin{verbatim}
+Golla, Anudeep, and Paul Strode. “Discovery of the Heart in Mathematics: 
+    Modeling the Chaotic Behaviors of Quantized Periods in the Mandelbrot Set: 
+    Journal of Emerging Investigators.” Discovery of the Heart in Mathematics:
+    Modeling the Chaotic Behaviors of Quantized Periods in the Mandelbrot Set | 
+    Journal of Emerging Investigators, 14 Dec. 2020, emerginginvestigators.org/
+    articles/discovery-of-the-heart-in-mathematics-modeling-the-chaotic-behaviors
+    -of-quantized-periods-in-the-mandelbrot-set. 
+    
+Kraus, Jiri. “An Introduction to Cuda-Aware MPI.” NVIDIA Technical Blog, 21 
+    Aug. 2022, developer.nvidia.com/blog/introduction-cuda-aware-mpi/. 
+    
+Latt, Jonas, et al. “Multi-Gpu Programming with Standard Parallel C++, Part 
+    2.” NVIDIA Technical Blog, 26 May 2022, developer.nvidia.com/blog/
+    multi-gpu-programming-with-standard-parallel-c-part-2/. 
+    “Running Cuda-Aware Open MPI.” FAQ: Running Cuda-Aware Open MPI, www.open-
+    mpi.org/faq/?category=runcuda. Accessed 13 June 2023. 
+
+"Mandelbrot Test Code.” Mandelbrot Test Code - Optimizing CUDA for GPU 
+    Architecture, selkie.macalester.edu/csinparallel/modules/CUDAArchitecture/
+    build/html/1-Mandelbrot/Mandelbrot.html. Accessed 14 June 2023. 
+
+Pacheco, Peter S., and Matthew Malensek. An Introduction to Parallel 
+    Programming / Peter S. Pacheco, Matthew Malensek. Morgan Kaufmann 
+    Publishers, an Imprint of Elsevier, 2022. 
+
+Pacheco, Peter, and Matthew Malensek. “An Introduction to Parallel  
+    Programming, 2nd Ed.” An Introduction to Parallel Programming, 2nd 
+    Edition, 7 Mar. 2023, www.cs.usfca.edu/~peter/ipp2/index.html. 
+
+Yi, X, et al. “Cudamicrobench: Microbenchmarks to Assist Cuda Performance
+    Programming.” CUDAMicroBench: Microbenchmarks to Assist CUDA Performance 
+    Programming (Conference) | OSTI.GOV, 27 Oct. 2021, www.osti.gov/servlets/purl/
+    1828124. 
+\end{verbatim}
+
+\pagebreak
 
 \begin{center}
 
@@ -132,5 +182,3 @@ After transformations are applied, the local i and j values must be adjusted in 
 \subsection{Catherine Yaroslavtseva}
 
 \end{document}
-
-In addition to the currently implemented cache format, we also explored a color-mapping cache. Instead of storing the color in association with the location is was assigned to, this cache stores the color associated with calculated values of "iter". However, while this version of the cache requires significantly less storage, it requires a call to the compute\_point() function for each index, and thus results in significantly lower time savings. This is especially true due to the overall low cost of our color calculations, so we decided not to include this cache implementation in the final version of the project
