@@ -106,7 +106,7 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
 	int stepy = (blockCount * blockSize) / width;
     //int my_i = blockDim.x * blockIdx.x + threadIdx.x;
     //int my_j = blockDim.y * blockIdx.y + threadIdx.y;
-	for(int my_i = my_a, my_j = my_b; my_i < width && my_j < height; my_i += stepx, my_j += stepy) {
+	for(int my_i = my_a, my_j = my_b; my_i < width && my_j < height; my_i = (my_i + stepx) % width, my_j = my_j + stepy) {
 		
 	
 		double x = xmin + my_i*(xmax-xmin)/width;
