@@ -19,7 +19,7 @@ Jared Push\\Catherine Yaroslavtseva\\\end{tabular}}
 
 The Mandelbrot Set is a set of complex numbers (c) that exhibits intricate fractal patterns, given the parameter that $f_c(z) = z^2 + c$ where z is iterated from 0. In this paper, we investigate various methods of optimizing  the computation and visualization of the Mandelbrot Set, primarily through means of parallelization. The primary purpose of these experiments is to explore different parallel programming environments by expanding on the base code provided by [INSERT]. \\ 
 
-The source code includes a serial version, an OpenMP version, a Cuda version, and various diverging versions of the latter two. [TODO: finish intro]
+The source code includes a serial version, an OpenMP version, a Cuda version, and various diverging versions of the latter two.
 
 \section{Experiments}
 
@@ -79,6 +79,8 @@ We noticed this discrepancy and investigated ways of balancing the workload in a
 \subsection{Cuda Block Sizes}
 
 \subsection{Multiple Kernels}
+
+Another method we attempted to use to split the workload was to combine OpenMP and Cuda to launch multiple kernels, each with on own CPU thread. In the process, we found that starting kernels in a parallelized for loop resulted in latency, and ultimately did not result in any time savings. Thus, we chose not to pursue this method further.
 
 \subsection{Cache}
 
