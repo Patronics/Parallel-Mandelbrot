@@ -173,7 +173,9 @@ uint16_t compute_pointCPU( double x, double y, uint16_t max )
         double z_imaginarysquared = 0;
 
         uint16_t iter = 0;
-        for (iter = 0; iter < max; ++iter) {
+	//if(x > -0.6 && x < 0.2 && y < -0.3 && y > 0.3) return max;
+
+       	for (iter = 0; iter < max; ++iter) {
                 z_imaginary = z_real * z_imaginary;
                 z_imaginary = z_imaginary + z_imaginary + y;
                 z_real = z_realsquared - z_imaginarysquared + x;
@@ -242,10 +244,8 @@ void reDraw(coordSet* coords){
 
     int n = width * height;
 
-    	double balance = 0.3;
-	if(n > 10000000) balance = 0.4;
+    	double balance = 1.0;
 	if(n > 100000000) balance = 0.6;
-	if(n > 500000000) balance = 0.7;
 	
 	//#define BLOCK_SIZE 16 //TODO bigger blocks are likely faster
 	
@@ -277,9 +277,11 @@ void reDraw(coordSet* coords){
 
 	//cudaMemcpy(cudaCache, ch, sizeof(struct cache), cudaMemcpyHostToDevice);
 	//if (err != cudaSuccess) printf("%s memcpy2\n", cudaGetErrorString(err));
-
+	if(balance > 0.0) {
 	compute_image <<<blockCount, blockSize>>>(cudaCoords, width, height, colorsSet, cudaCache, blockCount, blockSize, balance);
+	}
 	compute_imageCPU(coords, width, height, c, balance);
+	if(balance > 0.0) {
 	err = cudaDeviceSynchronize();
 	if (err != cudaSuccess) printf("%s synch\n", cudaGetErrorString(err));
 
@@ -291,7 +293,7 @@ void reDraw(coordSet* coords){
 
 	err = cudaDeviceSynchronize();
 	if (err != cudaSuccess) printf("%s synch2\n", cudaGetErrorString(err));
-	
+	}
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
 	fprintf(stderr, "\ncalculating frame took %lf seconds\n", runTime);
