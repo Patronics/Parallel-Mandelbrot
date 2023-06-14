@@ -90,7 +90,7 @@ Compute an entire image, writing each point to the given bitmap.
 Scale the image to the range (xmin-xmax,ymin-ymax).
 */
 
-__global__ void compute_image(coordSet* coords, int width, int height, struct colors *colorsSet, struct cache* ch)
+__global__ void compute_image(coordSet* coords, int width, int height, struct colors *colorsSet, struct cache* ch, int blockCount, int blockSize)
 {
 	double xmin=coords->xmin;
 	double xmax=coords->xmax;
@@ -102,11 +102,12 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
 	int zoom=coords->zoom;
 	int my_a = (blockDim.x * blockIdx.x + threadIdx.x) % width;
 	int my_b = (blockDim.x * blockIdx.x + threadIdx.x) / width;
-
+	int stepx = (blockCount * blockSize) % width;
+	int stepy = (blockCount * blockSize) / width;
     //int my_i = blockDim.x * blockIdx.x + threadIdx.x;
     //int my_j = blockDim.y * blockIdx.y + threadIdx.y;
-	for(int my_i = my_a; my_i < width; my_i += blockDim.x) {
-		for(int my_j = my_b; my_j < height; my_j += blockDim.x) {
+	for(int my_i = my_a, my_j = my_b; my_i < width && my_j < height; my_i += stepx, my_j += stepy) {
+		
 	
 		double x = xmin + my_i*(xmax-xmin)/width;
 		double y = ymin + my_j*(ymax-ymin)/height;
@@ -151,7 +152,7 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
 			colorsSet[my_i+width*my_j].b = ch->hashmap[key].b;
 		}
 	
-		}
+		
 	}
 }
 
@@ -178,7 +179,7 @@ void reDraw(coordSet* coords){
 	//#define BLOCK_SIZE 16 //TODO bigger blocks are likely faster
 	
 	//dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE); // so your threads are BLOCK_SIZE*BLOCK_SIZE, 256 in this case
-	dim3 dimGrid(width, height); // 1*1 blocks in a grid
+	dim3 dimGrid(width*width/blockCount, height*height/blockCount); // 1*1 blocks in a grid
 
 	struct colors* colorsSet;
 	coordSet* cudaCoords;
@@ -206,7 +207,7 @@ void reDraw(coordSet* coords){
 	cudaMemcpy(cudaCache, ch, sizeof(struct cache), cudaMemcpyHostToDevice);
 	if (err != cudaSuccess) printf("%s memcpy2\n", cudaGetErrorString(err));
 
-	compute_image <<<blockCount, blockSize>>>(cudaCoords, width, height, colorsSet, cudaCache);
+	compute_image <<<blockCount, blockSize>>>(cudaCoords, width, height, colorsSet, cudaCache, blockCount, blockSize);
 
 	err = cudaDeviceSynchronize();
 	if (err != cudaSuccess) printf("%s synch\n", cudaGetErrorString(err));
