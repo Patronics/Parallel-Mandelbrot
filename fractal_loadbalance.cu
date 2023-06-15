@@ -6,11 +6,6 @@ extern "C" {
 #include "gfx.h"
 }
 
-//#define WIDTH 1280
-//#define HEIGHT 960
-#define WIDTH 640
-#define HEIGHT 480
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -39,10 +34,6 @@ struct colors {
 	uint8_t r;
 	uint8_t g;
 	uint8_t b;
-};
-
-struct cache {
-	struct colors hashmap[WIDTH * HEIGHT];
 };
 
 int blockSize;
@@ -92,7 +83,7 @@ Compute an entire image, writing each point to the given bitmap.
 Scale the image to the range (xmin-xmax,ymin-ymax).
 */
 
-__global__ void compute_image(coordSet* coords, int width, int height, struct colors *colorsSet, struct cache* ch, int blockCount, int blockSize, double balance)
+__global__ void compute_image(coordSet* coords, int width, int height, struct colors *colorsSet, int blockCount, int blockSize, double balance)
 {
 	double xmin=coords->xmin;
 	double xmax=coords->xmax;
@@ -237,8 +228,6 @@ void setMidpoints(coordSet* coords){
 }
 
 void reDraw(coordSet* coords){
-	static struct cache* ch = (struct cache*)malloc(sizeof(struct cache));
-
     int width = windowWidth;
 	int height = windowHeight;
 
@@ -255,9 +244,9 @@ void reDraw(coordSet* coords){
 	struct colors* colorsSet;
 	coordSet* cudaCoords;
 	struct colors* c = (struct colors*)malloc(n * sizeof(struct colors));
-	struct cache* cudaCache;
+	//struct cache* cudaCache;
 
-	cudaMalloc(&cudaCache, sizeof(struct cache));
+	//cudaMalloc(&cudaCache, sizeof(struct cache));
 	cudaMalloc(&colorsSet, n * sizeof(struct colors));
 	cudaMalloc(&cudaCoords, sizeof(coordSet));
 
@@ -278,7 +267,7 @@ void reDraw(coordSet* coords){
 	//cudaMemcpy(cudaCache, ch, sizeof(struct cache), cudaMemcpyHostToDevice);
 	//if (err != cudaSuccess) printf("%s memcpy2\n", cudaGetErrorString(err));
 	if(balance > 0.0) {
-	compute_image <<<blockCount, blockSize>>>(cudaCoords, width, height, colorsSet, cudaCache, blockCount, blockSize, balance);
+	compute_image <<<blockCount, blockSize>>>(cudaCoords, width, height, colorsSet, blockCount, blockSize, balance);
 	}
 	compute_imageCPU(coords, width, height, c, balance);
 	if(balance > 0.0) {
@@ -311,7 +300,7 @@ void reDraw(coordSet* coords){
 	free(c);
 	cudaFree(colorsSet);
 	cudaFree(cudaCoords);
-	cudaFree(cudaCache);
+	//cudaFree(cudaCache);
 }
 
 

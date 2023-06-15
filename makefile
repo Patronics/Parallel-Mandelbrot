@@ -27,7 +27,7 @@ endif
 
 benchmark: benchmark.c
 	$(CC) benchmark.c -Wall $(CFLAGS) -o benchmark -lm
-	ln -sf benchmark Xbenchmark
+	ln -s benchmark Xbenchmark
 
 fractal: fractal.c gfx.c
 	$(CC) fractal.c gfx.c -Wall $(CFLAGS) -fopenmp -o fractal -lX11 -lm
@@ -47,10 +47,10 @@ cudafractal_cache: fractal_cache.cu gfx.c
 cudafractal_cache-nox: fractal_cache.cu
 	nvcc fractal_cache.cu -Xcompiler -fopenmp $(NVCCFLAGS) -o cudafractal_cache-nox -lm -D NOX
 
-cudafractal_loadbalance: fractal_cache.cu gfx.c
+cudafractal_loadbalance: fractal_loadbalance.cu gfx.c
 	nvcc fractal_loadbalance.cu gfx.c -Xcompiler -fopenmp $(NVCCFLAGS) -o cudafractal_loadbalance -lX11 -lm
 
-cudafractal_loopbreak: fractal_cache.cu gfx.c
+cudafractal_loopbreak: fractal_loopbreak.cu gfx.c
 	nvcc fractal_loopbreak.cu gfx.c -Xcompiler -fopenmp $(NVCCFLAGS) -o cudafractal_loopbreak -lX11 -lm
 
 example: example.c gfx.c
