@@ -57,4 +57,4 @@ example: example.c gfx.c
 	gcc example.c gfx.c -o example -lX11 -lm
 
 clean:
-	rm -f example fractal serialfractal cudafractal_cache cudafractal_loadbalance benchmark cudafractal_loopbreak
+	rm -f example fractal fractal-nox serialfractal serialfractal-nox cudafractal_cache cudafractal_cache-nox cudafractal_loadbalance cudafractal_loadbalance-nox benchmark Xbenchmark cudafractal_loopbreak cudafractal_loopbreak-nox

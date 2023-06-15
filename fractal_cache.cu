@@ -2,9 +2,11 @@
 fractal.cu - Parallel interactive Mandelbrot Fractal Display
 based on starting code for CSE 30341 Project 3.
 */
+#ifndef NOX
 extern "C" {
 #include "gfx.h"
 }
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -210,9 +212,11 @@ void compute_imageCPU(coordSet* coords, int width, int height, struct colors *co
 
 void draw_point(int i, int j, struct colors c)
 {
+	#ifndef NOX
 	gfx_color(c.r, c.g, c.b);
 	// Plot the point on the screen.
 	gfx_point(j, i);
+	#endif
 }
 
 void setMidpoints(coordSet* coords){
@@ -282,13 +286,14 @@ void reDraw(coordSet* coords){
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
 	fprintf(stderr, "\ncalculating frame took %lf seconds\n", runTime);
-	
+	#ifndef NOX
 	for (int i = 0; i < height; i++)
 		for (int j = 0; j < width; j++){
 			
 			draw_point(i, j, c[i * width + j]);
 			
 		}
+	#endif
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
 	fprintf(stderr, "\ncalculating and rendering frame took %lf seconds\n", runTime);
@@ -405,7 +410,7 @@ int main( int argc, char *argv[] ){
 		blockSize = atoi(argv[9]);
 	}
 
-
+	#ifndef NOX
 	// Open a new window.
 	if(windowWidth < 2048)
 	gfx_open(windowWidth,windowHeight,"Mandelbrot Fractal");
@@ -418,11 +423,11 @@ int main( int argc, char *argv[] ){
 	// Fill it with a dark blue initially.
 	gfx_clear_color(0,0,255);
 	gfx_clear();
-
+	#endif
 	//draw intial position
 	reDraw(dispCoords);
 
-
+	#ifndef NOX
 	while(1) {
 		// Wait for a key or mouse click.
 		int c = gfx_wait();
@@ -490,6 +495,7 @@ int main( int argc, char *argv[] ){
 		}
 //		} else if(c=='q'){
 	}
+	#endif
 
 	return 0;
 }
