@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#define NUM_APPROACHES 3
+#define NUM_APPROACHES 5
 
 void usage(){
 	printf("Usage: benchmark [n] [m] [dim] [max_iter] [approach_number]\n");
@@ -14,7 +14,9 @@ void usage(){
 	printf("\tapproach_number\t=\tapproach number to demonstrate, (defaults to 1, acceptable range from 1 to %d)\n\n", NUM_APPROACHES);
 	printf("\t\tapproach #1: serial implementation\n");
 	printf("\t\tapproach #2: OpenMP implementation\n");
-	printf("\t\tapproach #3: final CUDA implementation\n");
+	printf("\t\tapproach #3: CUDA implementation with caching\n");
+	printf("\t\tapproach #4: CUDA/CPU load balancing\n");
+	printf("\t\tapproach #5: CUDA with smart calculations\n");
 	//TODO:
 	//printf("approach #4 to ... : intermediate CUDA implementation, with optimizations x, y z\n");
 	exit(1);
@@ -25,13 +27,16 @@ int main(int argc, char *argv[]){
 	approaches[0] = "echo"; //for testing, secret approach 0
 	approaches[1] = "./serialfractal";
 	approaches[2] = "./fractal";
-	approaches[3] = "./cudafractal";
+	approaches[3] = "./cudafractal_cache";
+	approaches[4] = "./cudafractal_loadbalance";
+	approaches[5] = "./cudafractal_loopbreak";
 	char * approachSuffix = "";
 	//check if running "Xbenchmark" or not
+	/*
 	if(strchr(argv[0], 'X') == NULL){
 		approachSuffix = "-nox";
 	}
-	
+	*/
 	if(argc < 2){
 		usage();
 	}
@@ -74,7 +79,7 @@ int main(int argc, char *argv[]){
 	char approach[32];
 	strcpy(approach, approaches[approach_number]);
 	strcat(approach, approachSuffix);
-	execlp(approach,approach, "-1.0", "1.0","-1.0","1.0", max_iter, dim, dim, n, m, NULL);
+	execlp(approach,approach, "-1.5", "0.5","-1.0","1.0", max_iter, dim, dim, n, m, NULL);
 	
 }
 
