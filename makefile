@@ -27,7 +27,7 @@ endif
 
 benchmark: benchmark.c
 	$(CC) benchmark.c -Wall $(CFLAGS) -o benchmark -lm
-	ln -s benchmark Xbenchmark
+	ln -sf benchmark Xbenchmark
 
 fractal: fractal.c gfx.c
 	$(CC) fractal.c gfx.c -Wall $(CFLAGS) -fopenmp -o fractal -lX11 -lm
