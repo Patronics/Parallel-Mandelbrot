@@ -6,7 +6,7 @@ run `make` to build all scripts
 
 run the OpenMP version with `./fractal`, or the serial version with `./serialfractal`
 
-Run benchmarking versions with `./benchmark` or `./Xbenchmark` (they will print usage details when run with no arugments)
+Run benchmarking versions with `./benchmark` or `./Xbenchmark` (they will print usage details when run with no arguments)
 
 ## Controls
 
