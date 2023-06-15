@@ -2,14 +2,17 @@
 fractal.cu - Parallel interactive Mandelbrot Fractal Display
 based on starting code for CSE 30341 Project 3.
 */
+#ifndef NOX
 extern "C" {
 #include "gfx.h"
 }
+#endif
 
+#define BENCHMARK
 //#define WIDTH 1280
 //#define HEIGHT 960
-#define WIDTH 640
-#define HEIGHT 480
+#define MAXHASHSIZE 2048*2048
+
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -46,7 +49,7 @@ int blockSize;
 int blockCount;
 
 struct cache {
-	struct colors hashmap[4194304];
+	struct colors hashmap[MAXHASHSIZE];
 };
 
 /*
@@ -161,9 +164,11 @@ int my_a = (blockDim.x * blockIdx.x + threadIdx.x) % width;
 
 void draw_point(int i, int j, struct colors c)
 {
+	#ifndef NOX
 	gfx_color(c.r, c.g, c.b);
 	// Plot the point on the screen.
 	gfx_point(j, i);
+	#endif
 }
 
 void setMidpoints(coordSet* coords){
@@ -173,14 +178,12 @@ void setMidpoints(coordSet* coords){
 
 void reDraw(coordSet* coords){
 	static struct cache* ch = (struct cache*)malloc(sizeof(struct cache));
-
-    int width = gfx_xsize();
-	int height = gfx_ysize();
+	
+    int width = windowWidth;
+	int height = windowHeight;
 
     int n = width * height;
-	
-	#define BLOCK_SIZE 16 //TODO bigger blocks are likely faster
-	
+		
 	//dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE); // so your threads are BLOCK_SIZE*BLOCK_SIZE, 256 in this case
 	//dim3 dimGrid(width/BLOCK_SIZE, height/BLOCK_SIZE); // 1*1 blocks in a grid
 
@@ -226,7 +229,13 @@ void reDraw(coordSet* coords){
 	
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
+	#ifdef BENCHMARK
+	//get metadata to print
+	printf("Blocks: %d\tThreads per Block: %d\tSize:%dx%d\tDepth: %d\tTime: %f\n",
+	blockCount, blockSize, width, height, coords->maxiter, runTime);
+	#else
 	fprintf(stderr, "\ncalculating frame took %lf seconds\n", runTime);
+	#endif
 	
 	for (int i = 0; i < height; i++)
 		for (int j = 0; j < width; j++){
@@ -234,8 +243,9 @@ void reDraw(coordSet* coords){
 		}
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
+	#ifndef BENCHMARK
 	fprintf(stderr, "\ncalculating and rendering frame took %lf seconds\n", runTime);
-
+	#endif
 	free(c);
 	cudaFree(colorsSet);
 	cudaFree(cudaCoords);
