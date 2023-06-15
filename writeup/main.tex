@@ -459,6 +459,14 @@ Yi, X, et al. “Cudamicrobench: Microbenchmarks to Assist Cuda Performance
 
 Source code is available at the git repository, at \url{https://github.com/Patronics/Parallel-Mandelbrot}. The main files of interest are \verb|fractal.c| (serial and OpenMP implementation), and the 3 final cuda versions at \verb|fractal_cache.cu|, \verb|fractal_loadbalance.cu|, and \verb|fractal_loopbreak.cu|.
 
+\subsection{Cuda implementations summary}
+
+The cuda cache implementation in the repository includes a cache struct that stores the colors accociated with certain indeces in the window. It works by storing the initial screen of pixels in an array of color structs, where\\ \verb|index = my_i +width * my_j|.  When pixels that have already been calculated from the first screen are included in the transformed image, these pixels are retrieved from the cache rather than being recalculated in the \verb|compute_point()| function.\\
+
+Load balance attempts to balance the workload between the CPU and GPU, as kernel calls are asynchronous.\\
+
+Loop break attempts to shorten the time needed for calculation by automatically returning the maximum iterations if a point is within a certain range. This avoids needless iterations through a for loop, and can save time for large grid sizes calculating points near the origin.
+
 \section{Contributions}
 
 \subsection{Patrick Leiser}
