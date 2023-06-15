@@ -36,9 +36,6 @@ struct colors {
 	uint8_t b;
 };
 
-struct cache {
-	struct colors* hashmap;
-};
 
 int blockSize;
 int blockCount;
