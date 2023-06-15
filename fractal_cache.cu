@@ -8,6 +8,8 @@ extern "C" {
 }
 #endif
 
+#define BENCHMARK
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -285,7 +287,15 @@ void reDraw(coordSet* coords){
 	}
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
+	#ifdef BENCHMARK
+	//get metadata to print
+	printf("Blocks: %d\tThreads per Block: %d\tSize:%dx%d\tDepth: %d\tTime: %f\n",
+	blockCount, blockSize, width, height, coords->maxiter, runTime);
+	#else
 	fprintf(stderr, "\ncalculating frame took %lf seconds\n", runTime);
+	#endif
+	
+	
 	#ifndef NOX
 	for (int i = 0; i < height; i++)
 		for (int j = 0; j < width; j++){

@@ -8,6 +8,10 @@ extern "C" {
 #include "gfx.h"
 }
 #endif
+
+#define BENCHMARK
+
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -214,7 +218,9 @@ void compute_imageCPU(coordSet* coords, int width, int height, struct colors *co
         }
 	}
 	double end_time = omp_get_wtime();
+	#ifndef BENCHMARK
         printf("CPU portion took: %.5f\n", end_time - start_time);
+	#endif
 }
 
 void draw_point(int i, int j, struct colors c)
@@ -289,7 +295,13 @@ void reDraw(coordSet* coords){
 	}
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
+	#ifdef BENCHMARK
+	//get metadata to print
+	printf("Blocks: %d\tThreads per Block: %d\tSize:%dx%d\tDepth: %d\tTime: %f\n",
+	blockCount, blockSize, width, height, coords->maxiter, runTime);
+	#else
 	fprintf(stderr, "\ncalculating frame took %lf seconds\n", runTime);
+	#endif
 	
 	for (int i = 0; i < height; i++)
 		for (int j = 0; j < width; j++){
@@ -299,8 +311,9 @@ void reDraw(coordSet* coords){
 		}
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
+	#ifndef BENCHMARK
 	fprintf(stderr, "\ncalculating and rendering frame took %lf seconds\n", runTime);
-	
+	#endif
 	free(c);
 	cudaFree(colorsSet);
 	cudaFree(cudaCoords);
