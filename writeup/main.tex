@@ -3,6 +3,8 @@
 \usepackage{listings}
 \usepackage{appendix}
 
+\usepackage{hyperref}
+
 \parindent 0pt
 
 \begin{document}
@@ -455,20 +457,17 @@ Yi, X, et al. “Cudamicrobench: Microbenchmarks to Assist Cuda Performance
 
 \section{Source Code}
 
-\subsection{Optimized Cuda}
-
-\begin{lstlisting}[language=C]
-    
-\end{lstlisting}
+Source code is available at the git repository, at \url{https://github.com/Patronics/Parallel-Mandelbrot}. The main files of interest are \verb|fractal.c| (serial and OpenMP implementation), and the 3 final cuda versions at \verb|fractal_cache.cu|, \verb|fractal_loadbalance.cu|, and \verb|fractal_loopbreak.cu|.
 
 \section{Contributions}
 
 \subsection{Patrick Leiser}
+Made and refined the initial OpenMP implementation (that the CUDA implementations were derived from), added interactivity and color, made the benchmark script, and extensive debugging and testing of many versions of the code. Also produced the timings tables. 
 
 \subsection{Jared Pugh}
 Tested numerous strategies for improvement for OpenMP and CUDA, ran various benchmarks to evaluate improvements, heavy involvement in debugging implementations, investigated CPU/GPU load balancing.
 
 \subsection{Catherine Yaroslavtseva}
-Implemented cache, implemented cardioid/bulb math and coordinate mirroring, tested multiple kernel implementations, contributed to the report and initial CUDA implmentation, and tested block sizes.
+Implemented cache, implemented cardioid/bulb math and coordinate mirroring, tested multiple kernel implementations, contributed to the report and initial CUDA implementation, and tested block sizes.
 
 \end{document}
