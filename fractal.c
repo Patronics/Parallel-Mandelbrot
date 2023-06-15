@@ -4,7 +4,7 @@ based on starting code for CSE 30341 Project 3.
 */
 
 #define BENCHMARK
-
+//#define OPENMP_THREAD_NUM 16
 
 #ifndef NOX
 #include "gfx.h"
@@ -243,6 +243,9 @@ void reflect(coordSet* coords){
 
 
 int main( int argc, char *argv[] ){
+	#if defined(OPENMP) && defined(OPENMP_THREAD_NUM)
+	omp_set_num_threads(OPENMP_THREAD_NUM);
+	#endif
 	// The initial boundaries of the fractal image in x,y space.
 	const double xminDefault = -1.5;
 	const double xmaxDefault = 0.5;
