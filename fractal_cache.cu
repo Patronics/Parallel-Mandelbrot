@@ -6,11 +6,6 @@ extern "C" {
 #include "gfx.h"
 }
 
-//#define WIDTH 1280
-//#define HEIGHT 960
-#define WIDTH 640
-#define HEIGHT 480
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -41,9 +36,6 @@ struct colors {
 	uint8_t b;
 };
 
-struct cache {
-	struct colors hashmap[WIDTH * HEIGHT];
-};
 
 int blockSize;
 int blockCount;
@@ -92,7 +84,7 @@ Compute an entire image, writing each point to the given bitmap.
 Scale the image to the range (xmin-xmax,ymin-ymax).
 */
 
-__global__ void compute_image(coordSet* coords, int width, int height, struct colors *colorsSet, struct cache* ch, int blockCount, int blockSize, double balance)
+__global__ void compute_image(coordSet* coords, int width, int height, struct colors *colorsSet, struct colors* ch, int blockCount, int blockSize, double balance)
 {
 	double xmin=coords->xmin;
 	double xmax=coords->xmax;
@@ -130,7 +122,7 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
 		int key =  (i_adj + width * j_adj);
 		int key2 = (i_adj + width * flip_j);
 
-		if (zoom != 0 || ch->hashmap[key].r == 0 || l_x || m_x || l_y || m_y) {
+		if (zoom != 0 || ch[key].r == 0 || l_x || m_x || l_y || m_y) {
 			int iter = 0;
 			iter = compute_point(x,y,maxiter);
 			colorsSet[my_i+width*my_j].r = 255 * iter / maxiter;
@@ -138,19 +130,19 @@ __global__ void compute_image(coordSet* coords, int width, int height, struct co
 			colorsSet[my_i+width*my_j].b = 255 * iter / (maxiter/100);
 
 			if (xShift == 0 && yShift == 0 && zoom == 0) {;
-				ch->hashmap[key].r = colorsSet[my_i+width*my_j].r;
-				ch->hashmap[key].g = colorsSet[my_i+width*my_j].g;
-				ch->hashmap[key].b = colorsSet[my_i+width*my_j].b;
+				ch[key].r = colorsSet[my_i+width*my_j].r;
+				ch[key].g = colorsSet[my_i+width*my_j].g;
+				ch[key].b = colorsSet[my_i+width*my_j].b;
 		
-				ch->hashmap[key2].r = colorsSet[my_i+width*my_j].r;
-       	              		ch->hashmap[key2].g = colorsSet[my_i+width*my_j].g;
-               	      		ch->hashmap[key2].b = colorsSet[my_i+width*my_j].b;
+				ch[key2].r = colorsSet[my_i+width*my_j].r;
+       	              		ch[key2].g = colorsSet[my_i+width*my_j].g;
+               	      		ch[key2].b = colorsSet[my_i+width*my_j].b;
 			}
 		}
 		else {
-			colorsSet[my_i+width*my_j].r = ch->hashmap[key].r;
-			colorsSet[my_i+width*my_j].g = ch->hashmap[key].g;
-			colorsSet[my_i+width*my_j].b = ch->hashmap[key].b;
+			colorsSet[my_i+width*my_j].r = ch[key].r;
+			colorsSet[my_i+width*my_j].g = ch[key].g;
+			colorsSet[my_i+width*my_j].b = ch[key].b;
 		}
 		if(my_i + stepx >= width) carry = 1;
 	
@@ -229,15 +221,16 @@ void setMidpoints(coordSet* coords){
 }
 
 void reDraw(coordSet* coords){
-	static struct cache* ch = (struct cache*)malloc(sizeof(struct cache));
-
+	
     int width = windowWidth;
 	int height = windowHeight;
 
     int n = width * height;
+	
+	static struct colors* ch = (struct colors*)malloc(n*sizeof(struct colors));
 
-    	double balance = 1.0;
-	if(n > 100000000) balance = 0.6;
+
+    double balance = 1.0; //always use GPU based rendering on this version
 	
 	//#define BLOCK_SIZE 16 //TODO bigger blocks are likely faster
 	
@@ -247,9 +240,9 @@ void reDraw(coordSet* coords){
 	struct colors* colorsSet;
 	coordSet* cudaCoords;
 	struct colors* c = (struct colors*)malloc(n * sizeof(struct colors));
-	struct cache* cudaCache;
+	struct colors* cudaCache;
 
-	cudaMalloc(&cudaCache, sizeof(struct cache));
+	cudaMalloc(&cudaCache, n * sizeof(struct colors));
 	cudaMalloc(&colorsSet, n * sizeof(struct colors));
 	cudaMalloc(&cudaCoords, sizeof(coordSet));
 
