@@ -2,14 +2,11 @@
 fractal.cu - Parallel interactive Mandelbrot Fractal Display
 based on starting code for CSE 30341 Project 3.
 */
+#ifndef NOX
 extern "C" {
 #include "gfx.h"
 }
-
-//#define WIDTH 1280
-//#define HEIGHT 960
-#define WIDTH 640
-#define HEIGHT 480
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -41,9 +38,6 @@ struct colors {
 	uint8_t b;
 };
 
-struct cache {
-	struct colors hashmap[WIDTH * HEIGHT];
-};
 
 int blockSize;
 int blockCount;
@@ -92,7 +86,7 @@ Compute an entire image, writing each point to the given bitmap.
 Scale the image to the range (xmin-xmax,ymin-ymax).
 */
 
-__global__ void compute_image(coordSet* coords, int width, int height, struct colors *colorsSet, struct cache* ch, int blockCount, int blockSize, double balance)
+__global__ void compute_image(coordSet* coords, int width, int height, struct colors *colorsSet, int blockCount, int blockSize, double balance)
 {
 	double xmin=coords->xmin;
 	double xmax=coords->xmax;
@@ -227,9 +221,11 @@ void compute_imageCPU(coordSet* coords, int width, int height, struct colors *co
 
 void draw_point(int i, int j, struct colors c)
 {
+	#ifndef NOX
 	gfx_color(c.r, c.g, c.b);
 	// Plot the point on the screen.
 	gfx_point(j, i);
+	#endif
 }
 
 void setMidpoints(coordSet* coords){
@@ -238,7 +234,6 @@ void setMidpoints(coordSet* coords){
 }
 
 void reDraw(coordSet* coords){
-	static struct cache* ch = (struct cache*)malloc(sizeof(struct cache));
 
     int width = windowWidth;
 	int height = windowHeight;
@@ -256,9 +251,7 @@ void reDraw(coordSet* coords){
 	struct colors* colorsSet;
 	coordSet* cudaCoords;
 	struct colors* c = (struct colors*)malloc(n * sizeof(struct colors));
-	struct cache* cudaCache;
 
-	cudaMalloc(&cudaCache, sizeof(struct cache));
 	cudaMalloc(&colorsSet, n * sizeof(struct colors));
 	cudaMalloc(&cudaCoords, sizeof(coordSet));
 
@@ -279,7 +272,7 @@ void reDraw(coordSet* coords){
 	//cudaMemcpy(cudaCache, ch, sizeof(struct cache), cudaMemcpyHostToDevice);
 	//if (err != cudaSuccess) printf("%s memcpy2\n", cudaGetErrorString(err));
 	if(balance > 0.0) {
-	compute_image <<<blockCount, blockSize>>>(cudaCoords, width, height, colorsSet, cudaCache, blockCount, blockSize, balance);
+	compute_image <<<blockCount, blockSize>>>(cudaCoords, width, height, colorsSet, blockCount, blockSize, balance);
 	}
 	//compute_imageCPU(coords, width, height, c, balance);
 	if(balance > 0.0) {
@@ -298,13 +291,14 @@ void reDraw(coordSet* coords){
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
 	fprintf(stderr, "\ncalculating frame took %lf seconds\n", runTime);
-	
+	#ifndef NOX
 	for (int i = 0; i < height; i++)
 		for (int j = 0; j < width; j++){
 			
 			draw_point(i, j, c[i * width + j]);
 			
 		}
+	#endif
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
 	fprintf(stderr, "\ncalculating and rendering frame took %lf seconds\n", runTime);
@@ -312,7 +306,6 @@ void reDraw(coordSet* coords){
 	free(c);
 	cudaFree(colorsSet);
 	cudaFree(cudaCoords);
-	cudaFree(cudaCache);
 }
 
 
@@ -421,7 +414,7 @@ int main( int argc, char *argv[] ){
 		blockSize = atoi(argv[9]);
 	}
 
-
+	#ifndef NOX
 	// Open a new window.
 	if(windowWidth < 2048)
 	gfx_open(windowWidth,windowHeight,"Mandelbrot Fractal");
@@ -430,15 +423,15 @@ int main( int argc, char *argv[] ){
 		printf("You have chosen a window size greater than 2048. You will not see a visualization, but the benchmark is running and will calculate results shortly.\n");
 	}
 
-
 	// Fill it with a dark blue initially.
 	gfx_clear_color(0,0,255);
 	gfx_clear();
+	#endif
 
 	//draw intial position
 	reDraw(dispCoords);
 
-
+	#ifndef NOX
 	while(1) {
 		// Wait for a key or mouse click.
 		int c = gfx_wait();
@@ -506,6 +499,7 @@ int main( int argc, char *argv[] ){
 		}
 //		} else if(c=='q'){
 	}
+	#endif
 
 	return 0;
 }
