@@ -32,15 +32,13 @@ int main(int argc, char *argv[]){
 	approaches[5] = "./cudafractal_loopbreak";
 	char * approachSuffix = "";
 	//check if running "Xbenchmark" or not
-	/*
 	if(strchr(argv[0], 'X') == NULL){
 		approachSuffix = "-nox";
 	}
-	*/
 	if(argc < 2){
 		usage();
 	}
-	
+
 	//because just used as arugments anyway, can just keep variables as strings
 	char* n = "512";
 	char* m = "512";

@@ -1,4 +1,4 @@
-all: benchmark fractal fractal-nox serialfractal serialfractal-nox cudafractal_cache cudafractal_loadbalance cudafractal_loopbreak
+all: benchmark fractal fractal-nox serialfractal serialfractal-nox cudafractal_cache cudafractal_cache-nox cudafractal_loadbalance cudafractal_loadbalance-nox cudafractal_loopbreak cudafractal_loopbreak-nox cudafractal_loadbalance-nox
  
 
 ifeq ($(OS),Windows_NT) 
@@ -44,14 +44,21 @@ serialfractal-nox: fractal.c
 cudafractal_cache: fractal_cache.cu gfx.c
 	nvcc fractal_cache.cu gfx.c -Xcompiler -fopenmp $(NVCCFLAGS) -o cudafractal_cache -lX11 -lm
 
-cudafractal_loadbalance: fractal_cache.cu gfx.c
+cudafractal_cache-nox: fractal_cache.cu
+	nvcc fractal_cache.cu -Xcompiler -fopenmp $(NVCCFLAGS) -o cudafractal_cache-nox -lm -D NOX
+
+cudafractal_loadbalance: fractal_loadbalance.cu gfx.c
 	nvcc fractal_loadbalance.cu gfx.c -Xcompiler -fopenmp $(NVCCFLAGS) -o cudafractal_loadbalance -lX11 -lm
 
-cudafractal_loopbreak: fractal_cache.cu gfx.c
+cudafractal_loadbalance-nox: fractal_loadbalance.cu
+	nvcc fractal_loadbalance.cu -Xcompiler -fopenmp $(NVCCFLAGS) -o cudafractal_loadbalance-nox -lm -D NOX
+
+cudafractal_loopbreak: fractal_loopbreak.cu gfx.c
 	nvcc fractal_loopbreak.cu gfx.c -Xcompiler -fopenmp $(NVCCFLAGS) -o cudafractal_loopbreak -lX11 -lm
 
-example: example.c gfx.c
-	gcc example.c gfx.c -o example -lX11 -lm
+cudafractal_loopbreak-nox: fractal_loopbreak.cu
+	nvcc fractal_loopbreak.cu -Xcompiler -fopenmp $(NVCCFLAGS) -o cudafractal_loopbreak-nox -lm -D NOX
+
 
 clean:
-	rm -f example fractal serialfractal cudafractal_cache cudafractal_loadbalance benchmark cudafractal_loopbreak
+	rm -f example fractal fractal-nox serialfractal serialfractal-nox cudafractal_cache cudafractal_cache-nox cudafractal_loadbalance cudafractal_loadbalance-nox benchmark Xbenchmark cudafractal_loopbreak cudafractal_loopbreak-nox
