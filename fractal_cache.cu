@@ -2,14 +2,14 @@
 fractal.cu - Parallel interactive Mandelbrot Fractal Display
 based on starting code for CSE 30341 Project 3.
 */
+
+#ifndef NOX
 extern "C" {
 #include "gfx.h"
 }
+#endif
 
-//#define WIDTH 1280
-//#define HEIGHT 960
-#define WIDTH 640
-#define HEIGHT 480
+#define BENCHMARK
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -161,9 +161,11 @@ int my_a = (blockDim.x * blockIdx.x + threadIdx.x) % width;
 
 void draw_point(int i, int j, struct colors c)
 {
+#ifndef NOX
 	gfx_color(c.r, c.g, c.b);
 	// Plot the point on the screen.
 	gfx_point(j, i);
+#endif
 }
 
 void setMidpoints(coordSet* coords){
@@ -211,31 +213,43 @@ void reDraw(coordSet* coords){
 	if (err != cudaSuccess) printf("%s memcpy2\n", cudaGetErrorString(err));
 
 	compute_image <<<blockCount, blockSize>>>(cudaCoords, width, height, colorsSet, cudaCache, blockCount, blockSize, balance);
-
+if(balance > 0.0) {
 	err = cudaDeviceSynchronize();
 	if (err != cudaSuccess) printf("%s synch\n", cudaGetErrorString(err));
 
-	err = cudaMemcpy(c, colorsSet, n * sizeof(struct colors), cudaMemcpyDeviceToHost);
+	err = cudaMemcpy(c, colorsSet, n * balance * sizeof(struct colors), cudaMemcpyDeviceToHost);
 	if (err != cudaSuccess) printf("%s memcpy3\n", cudaGetErrorString(err));
+
+	//err = cudaMemcpy(c, colorsSet, n * balance * sizeof(struct colors), cudaMemcpyDeviceToHost);
+        //if (err != cudaSuccess) printf("%s memcpy3\n", cudaGetErrorString(err));
 
 	err = cudaMemcpy(ch, cudaCache, sizeof(struct cache), cudaMemcpyDeviceToHost);
 	if (err != cudaSuccess) printf("%s memcpy4\n", cudaGetErrorString(err));
 
 	err = cudaDeviceSynchronize();
 	if (err != cudaSuccess) printf("%s synch2\n", cudaGetErrorString(err));
-	
+	}
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
+	#ifdef BENCHMARK
+	//get metadata to print
+	printf("Blocks: %d\tThreads per Block: %d\tSize:%dx%d\tDepth: %d\tTime: %f\n",
+	blockCount, blockSize, width, height, coords->maxiter, runTime);
+	#else
 	fprintf(stderr, "\ncalculating frame took %lf seconds\n", runTime);
+	#endif
 	
 	for (int i = 0; i < height; i++)
 		for (int j = 0; j < width; j++){
+			
 			draw_point(i, j, c[i * width + j]);
+			
 		}
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
+	#ifndef BENCHMARK
 	fprintf(stderr, "\ncalculating and rendering frame took %lf seconds\n", runTime);
-
+	#endif
 	free(c);
 	cudaFree(colorsSet);
 	cudaFree(cudaCoords);
