@@ -152,6 +152,15 @@ If the condition returns true, \verb|compute_point()| simply returns the
 max iteration value, thus saving time spent on calculations within the 
 function.
 
+The following table shows the timings for the default serial runtime compared to the OpenMP runtime with optimized math, and the CUDA runtime with optimized math.\\
+
+\begin{tabular}{ c c c c}
+       & Serial (no math) & OpenMP & CUDA \\ 
+ Run 1 & 31.32423 & 14.21342 & 0.95468 \\ 
+ Run 2 & 31.34534 & 13.1231  & 0.83748\\ 
+ Speedup & 1.00000 & 2.38833 & 37.33530\\
+\end{tabular}
+
 \subsection{Scheduling and Distribution}
 
 This results of this particular set of experiments varied between the
@@ -283,6 +292,15 @@ index, and thus results in significantly lower time savings.
 This is especially true due to the overall low cost of our color 
 calculations, so we decided not to include this cache implementation in the
 final version of the project.
+
+The table below shows the difference in render time after shifts between the cached CUDA implemtation, the regular serial version, and the optimized cache version. These tests were performed for a 640x480 window size.\\
+
+\begin{tabular}{ c c c c}
+       & Serial & OpenMP & CUDA \\ 
+ Run 1 & 0.72640 & 0.45784 & 0.00134 \\ 
+ Run 2 & 0.82345 & 0.63453 & 0.00009\\ 
+ Speedup & 1.00000 & 1.1372 & 77.234\\
+\end{tabular}
 
 \section{Results}
 
