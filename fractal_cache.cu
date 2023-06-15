@@ -2,6 +2,7 @@
 fractal.cu - Parallel interactive Mandelbrot Fractal Display
 based on starting code for CSE 30341 Project 3.
 */
+
 #ifndef NOX
 extern "C" {
 #include "gfx.h"
@@ -9,9 +10,10 @@ extern "C" {
 #endif
 
 #define BENCHMARK
-//#define WIDTH 1280
-//#define HEIGHT 960
+
+
 #define MAXHASHSIZE 2048*2048
+
 
 
 #include <stdlib.h>
@@ -214,19 +216,22 @@ void reDraw(coordSet* coords){
 	if (err != cudaSuccess) printf("%s memcpy2\n", cudaGetErrorString(err));
 
 	compute_image <<<blockCount, blockSize>>>(cudaCoords, width, height, colorsSet, cudaCache, blockCount, blockSize, balance);
-
+if(balance > 0.0) {
 	err = cudaDeviceSynchronize();
 	if (err != cudaSuccess) printf("%s synch\n", cudaGetErrorString(err));
 
-	err = cudaMemcpy(c, colorsSet, n * sizeof(struct colors), cudaMemcpyDeviceToHost);
+	err = cudaMemcpy(c, colorsSet, n * balance * sizeof(struct colors), cudaMemcpyDeviceToHost);
 	if (err != cudaSuccess) printf("%s memcpy3\n", cudaGetErrorString(err));
+
+	//err = cudaMemcpy(c, colorsSet, n * balance * sizeof(struct colors), cudaMemcpyDeviceToHost);
+        //if (err != cudaSuccess) printf("%s memcpy3\n", cudaGetErrorString(err));
 
 	err = cudaMemcpy(ch, cudaCache, sizeof(struct cache), cudaMemcpyDeviceToHost);
 	if (err != cudaSuccess) printf("%s memcpy4\n", cudaGetErrorString(err));
 
 	err = cudaDeviceSynchronize();
 	if (err != cudaSuccess) printf("%s synch2\n", cudaGetErrorString(err));
-	
+	}
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
 	#ifdef BENCHMARK
@@ -239,7 +244,9 @@ void reDraw(coordSet* coords){
 	
 	for (int i = 0; i < height; i++)
 		for (int j = 0; j < width; j++){
+			
 			draw_point(i, j, c[i * width + j]);
+			
 		}
 	clock_gettime(CLOCK_MONOTONIC, &endTime);
 	runTime = difftime(endTime.tv_sec, startTime.tv_sec)+((endTime.tv_nsec-startTime.tv_nsec)/1e9);
